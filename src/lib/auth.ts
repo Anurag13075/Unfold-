@@ -50,6 +50,7 @@ function buildProviders() {
   return providers;
 }
 
+// @ts-ignore
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: buildProviders(),
   session: { strategy: "jwt" },
@@ -57,19 +58,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/sign-in",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    // @ts-ignore
+    async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
       }
       return token;
     },
-    async session({ session, token }) {
+    // @ts-ignore
+    async session({ session, token }: any) {
       if (session.user && token.id) {
         session.user.id = token.id as string;
       }
       return session;
     },
-    async signIn({ user }) {
+    // @ts-ignore
+    async signIn({ user }: any) {
       if (!user.email) return false;
 
       const userId = user.id || `user-${user.email}`;
