@@ -121,11 +121,58 @@ export function TransactionDetail({ transactionId, compact, initialData }: Trans
       {message && (
         <div>
           <p className="text-body-s uppercase tracking-wide text-text-secondary mb-3">
-            Recovery message
+            Interactive Customer Phone Frame & Recovery Action
           </p>
-          <MessageBubble channel={message.channel} body={message.body} />
+          <PhoneMockup message={message} transaction={transaction} />
         </div>
       )}
+    </div>
+  );
+}
+
+function PhoneMockup({ message, transaction }: { message: RecoveryMessage; transaction: Transaction }) {
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(transaction.status === "recovered");
+
+  const handleSimulateRetry = () => {
+    setIsRetrying(true);
+    setTimeout(() => {
+      setIsRetrying(false);
+      setIsSuccess(true);
+      transaction.status = "recovered";
+      transaction.recovered_at = new Date().toISOString();
+    }, 1500);
+  };
+
+  return (
+    <div className="bg-ink-950 border border-border rounded-2xl p-4 max-w-sm shadow-modal">
+      <div className="w-24 h-4 bg-surface-600 rounded-full mx-auto mb-4" />
+      <div className="space-y-3">
+        <MessageBubble channel={message.channel} body={message.body} />
+
+        <div className="pt-2">
+          {isSuccess ? (
+            <div className="w-full py-2.5 px-4 bg-pulse-500/10 border border-pulse-500/30 rounded-btn text-pulse-500 text-center font-mono text-mono-s font-bold">
+              ✓ Customer Payment Recovered (₹{transaction.amount.toLocaleString("en-IN")})
+            </div>
+          ) : (
+            <button
+              onClick={handleSimulateRetry}
+              disabled={isRetrying}
+              className="w-full py-2.5 px-4 bg-pulse-500 hover:bg-pulse-700 text-ink-950 font-mono text-mono-s font-bold rounded-btn transition-colors flex items-center justify-center gap-2"
+            >
+              {isRetrying ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <span>Customer Retrying Payment...</span>
+                </>
+              ) : (
+                <span>Simulate Customer One-Tap Retry</span>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

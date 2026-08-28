@@ -8,7 +8,9 @@ import { StatusChip } from "@/components/ui/status-chip";
 import { Waveform } from "@/components/waveform/waveform";
 import { RouteClusterCard } from "@/components/routes/route-cluster-card";
 import { TransactionDrawer } from "@/components/transactions/transaction-drawer";
+import { SimulatorControls } from "@/components/dashboard/simulator-controls";
 import { formatCurrency } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import type { Transaction, TransactionFilter } from "@/types";
 
 interface DashboardClientProps {
@@ -18,8 +20,26 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ transactions, clusters, stats }: DashboardClientProps) {
+  const router = useRouter();
   const [filter, setFilter] = useState<TransactionFilter>("all");
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+
+  const handleSimulate = async (scenario: { count: number; injectCluster: boolean }) => {
+    setIsSimulating(true);
+    try {
+      await fetch("/api/simulator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(scenario),
+      });
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSimulating(false);
+    }
+  };
 
   const filtered =
     filter === "all" ? transactions : transactions.filter((t) => t.status === filter);
@@ -48,6 +68,7 @@ export function DashboardClient({ transactions, clusters, stats }: DashboardClie
       </header>
 
       <div className="p-6">
+        <SimulatorControls onSimulate={handleSimulate} isLoading={isSimulating} />
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6">
           {/* Pulse Ledger */}
           <div className="relative">

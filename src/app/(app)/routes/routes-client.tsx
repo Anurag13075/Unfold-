@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { RouteClusterCard } from "@/components/routes/route-cluster-card";
+import { SmartRouterRuleEngine } from "@/components/routes/smart-router-rule-engine";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { RouteCluster } from "@/types";
 
@@ -29,6 +30,7 @@ export function RoutesClient({ clusters }: RoutesClientProps) {
       </header>
 
       <div className="p-6 max-w-container">
+        <SmartRouterRuleEngine />
         <div className="flex flex-wrap gap-4 mb-6">
           <SegmentedControl
             options={issuers.map((i) => ({ value: i, label: i === "all" ? "All issuers" : i }))}

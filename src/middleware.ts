@@ -11,7 +11,8 @@ const protectedRoutes = [
 
 const authRoutes = ["/sign-in", "/sign-up"];
 
-export default auth((req) => {
+// @ts-ignore
+export default auth((req: any) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
   const isProtected = protectedRoutes.some(

@@ -49,7 +49,7 @@ export function ProofBand() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, i) => (
             <ScrollReveal key={stat.label} delay={i * 70}>
-              <StatCard {...stat} countUp endValue={stat.endValue} />
+              <StatCard value={`${stat.endValue}${stat.suffix}`} {...stat} countUp endValue={stat.endValue} />
             </ScrollReveal>
           ))}
         </div>

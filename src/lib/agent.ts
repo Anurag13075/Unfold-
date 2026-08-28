@@ -71,7 +71,7 @@ function ruleBasedDecision(params: {
   const isTechnical = ["GATEWAY_ERROR", "ISSUER_UNAVAILABLE"].includes(declineCode);
 
   let decision: AgentDecisionObject["decision"] = "retry_delayed";
-  let delay_seconds = 300;
+  let delay_seconds: number | undefined = 300;
   let alt_method: string | undefined;
   let reasoning = "";
   let channel: "whatsapp" | "sms" | "email" = "whatsapp";
