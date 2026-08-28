@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
-import { demoStore, type DemoUser } from "./supabase";
+import { ensureUserExists } from "./users";
 
 function buildProviders() {
   const providers = [];
@@ -77,25 +77,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!user.email) return false;
 
       const userId = user.id || `user-${user.email}`;
-      const existing = demoStore.users.get(userId);
-
-      if (!existing) {
-        const newUser: DemoUser = {
-          id: userId,
-          email: user.email,
-          name: user.name ?? null,
-          image: user.image ?? null,
-          onboarded_at: null,
-          workspace_name: "My Workspace",
-          razorpay_key_id: null,
-          razorpay_key_secret_enc: null,
-          whatsapp_key_enc: null,
-          sms_key_enc: null,
-          email_key_enc: null,
-          created_at: new Date().toISOString(),
-        };
-        demoStore.users.set(userId, newUser);
-      }
+      await ensureUserExists(userId, user.email, user.name ?? undefined);
 
       return true;
     },

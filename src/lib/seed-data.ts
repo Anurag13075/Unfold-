@@ -1,9 +1,9 @@
 import type {
-  DemoRouteCluster,
-  DemoTransaction,
-  DemoAgentAction,
-  DemoRecoveryMessage,
-} from "./supabase";
+  RouteCluster,
+  Transaction,
+  AgentAction,
+  RecoveryMessage,
+} from "@/types";
 
 const ISSUERS = ["HDFC", "ICICI", "SBI", "Axis", "Kotak", "Yes Bank"];
 const METHODS = ["UPI Intent", "UPI Collect", "Card", "Netbanking", "Wallet"];
@@ -33,7 +33,7 @@ function generateId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function generateWaveform(status: DemoTransaction["status"]): number[] {
+function generateWaveform(status: Transaction["status"]): number[] {
   const points = 40;
   const data: number[] = [];
   for (let i = 0; i < points; i++) {
@@ -51,12 +51,12 @@ function generateWaveform(status: DemoTransaction["status"]): number[] {
 }
 
 export function seedDemoData(userId: string) {
-  const transactions: DemoTransaction[] = [];
-  const agentActions: DemoAgentAction[] = [];
-  const recoveryMessages: DemoRecoveryMessage[] = [];
+  const transactions: Transaction[] = [];
+  const agentActions: AgentAction[] = [];
+  const recoveryMessages: RecoveryMessage[] = [];
   const now = Date.now();
 
-  const statuses: DemoTransaction["status"][] = [
+  const statuses: Transaction["status"][] = [
     "declined", "declined", "recovering", "recovered", "recovered",
     "declined", "recovered", "declined", "recovering", "recovered",
     "declined", "recovered", "declined", "declined", "recovered",
@@ -67,9 +67,8 @@ export function seedDemoData(userId: string) {
     const id = generateId("txn");
     const createdAt = new Date(now - i * 180000 - Math.random() * 60000).toISOString();
 
-    const txn: DemoTransaction = {
+    const txn: Transaction = {
       id,
-      user_id: userId,
       razorpay_payment_id: `pay_${generateId("rzp").slice(4)}`,
       amount: Math.floor(Math.random() * 15000) + 500,
       currency: "INR",
@@ -85,7 +84,7 @@ export function seedDemoData(userId: string) {
     transactions.push(txn);
 
     if (status !== "declined" || i % 2 === 0) {
-      const action: DemoAgentAction = {
+      const action: AgentAction = {
         id: generateId("act"),
         transaction_id: id,
         decision: status === "recovered" ? "retry_delayed" : status === "recovering" ? "retry_now" : "suggest_alt_method",
@@ -112,10 +111,9 @@ export function seedDemoData(userId: string) {
     }
   });
 
-  const clusters: DemoRouteCluster[] = [
+  const clusters: RouteCluster[] = [
     {
       id: generateId("cluster"),
-      user_id: userId,
       issuer: "HDFC",
       method: "UPI Intent",
       error_code: "GATEWAY_ERROR",
@@ -137,7 +135,6 @@ export function seedDemoData(userId: string) {
     },
     {
       id: generateId("cluster"),
-      user_id: userId,
       issuer: "ICICI",
       method: "Card",
       error_code: "AUTHENTICATION_ERROR",
@@ -155,7 +152,6 @@ export function seedDemoData(userId: string) {
     },
     {
       id: generateId("cluster"),
-      user_id: userId,
       issuer: "SBI",
       method: "Netbanking",
       error_code: "ISSUER_UNAVAILABLE",

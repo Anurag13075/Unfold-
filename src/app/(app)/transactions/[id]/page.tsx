@@ -1,16 +1,13 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { demoStore } from "@/lib/supabase";
 import { getAgentActions, getRecoveryMessage, getTransaction } from "@/lib/data";
 import { TransactionDetail } from "@/components/transactions/transaction-detail";
 import { notFound } from "next/navigation";
 
-export default function TransactionPage({ params }: { params: { id: string } }) {
-  const transaction = getTransaction(params.id);
+export default async function TransactionPage({ params }: { params: { id: string } }) {
+  const transaction = await getTransaction(params.id);
   if (!transaction) notFound();
 
-  const actions = getAgentActions(params.id);
-  const message = getRecoveryMessage(params.id);
+  const actions = await getAgentActions(params.id);
+  const message = await getRecoveryMessage(params.id);
 
   return (
     <>

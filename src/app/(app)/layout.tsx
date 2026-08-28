@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { demoStore } from "@/lib/supabase";
+import { getUserById } from "@/lib/users";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Providers } from "@/components/providers";
 
@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/sign-in");
   }
 
-  const user = demoStore.users.get(session.user.id);
+  const user = await getUserById(session.user.id);
   if (user && !user.onboarded_at) {
     redirect("/onboarding");
   }

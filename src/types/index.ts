@@ -19,6 +19,22 @@ export interface AgentDecisionObject {
   confidence: number;
 }
 
+export interface DbUser {
+  id: string;
+  email: string;
+  name: string | null;
+  image: string | null;
+  onboarded_at: string | null;
+  workspace_name: string;
+  razorpay_key_id: string | null;
+  razorpay_key_secret_enc: string | null;
+  whatsapp_key_enc: string | null;
+  sms_key_enc: string | null;
+  email_key_enc: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Transaction {
   id: string;
   razorpay_payment_id: string;

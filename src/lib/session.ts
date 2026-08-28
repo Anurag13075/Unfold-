@@ -1,12 +1,12 @@
 import { auth } from "@/lib/auth";
-import { demoStore } from "@/lib/supabase";
+import { getUserById } from "@/lib/users";
 
 export async function getCurrentUser() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  const user = demoStore.users.get(session.user.id);
-  return user ?? null;
+  const user = await getUserById(session.user.id);
+  return user;
 }
 
 export async function requireAuth() {
@@ -18,6 +18,6 @@ export async function requireAuth() {
 }
 
 export async function isOnboarded(userId: string): Promise<boolean> {
-  const user = demoStore.users.get(userId);
+  const user = await getUserById(userId);
   return !!user?.onboarded_at;
 }

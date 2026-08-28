@@ -1,4 +1,5 @@
-import { demoStore } from "@/lib/supabase";
+import { createServiceClient } from "@/lib/supabase";
+import { ensureUserExists } from "@/lib/users";
 import { DECLINE_CODES, ISSUERS, METHODS } from "@/lib/seed-data";
 import { analyzeTransaction, summarizeCluster } from "@/lib/agent";
 import { NextResponse } from "next/server";
@@ -11,6 +12,13 @@ function randomFrom<T>(arr: T[]): T {
 export async function POST(req: Request) {
   const { userId = "demo-user-1", count = 1, injectCluster = false } = await req.json();
 
+  await ensureUserExists(userId);
+
+  const supabase = createServiceClient();
+  if (!supabase) {
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+  }
+
   const generated = [];
 
   for (let i = 0; i < count; i++) {
@@ -22,6 +30,7 @@ export async function POST(req: Request) {
     const method = isCluster ? "UPI Intent" : randomFrom(METHODS);
     const txnId = `txn_sim_${crypto.randomUUID().slice(0, 8)}`;
     const amount = Math.floor(Math.random() * 12000) + 500;
+    const now = new Date().toISOString();
 
     const txn = {
       id: txnId,
@@ -31,15 +40,19 @@ export async function POST(req: Request) {
       currency: "INR",
       method,
       issuer,
-      status: "declined" as const,
+      status: "declined",
       decline_code: decline.code,
       decline_reason: decline.reason,
       merchant_name: randomFrom(["Urban Threads", "FreshCart", "CloudDesk"]),
-      created_at: new Date().toISOString(),
+      created_at: now,
       recovered_at: null,
     };
 
-    demoStore.transactions.set(txnId, txn);
+    const { error: txnErr } = await supabase.from("transactions").upsert(txn);
+    if (txnErr) {
+      console.error("Error saving simulated transaction:", txnErr);
+      continue;
+    }
 
     const decision = await analyzeTransaction({
       transactionId: txnId,
@@ -50,7 +63,7 @@ export async function POST(req: Request) {
       issuer,
     });
 
-    demoStore.agentActions.push({
+    const action = {
       id: crypto.randomUUID(),
       transaction_id: txnId,
       decision: decision.decision,
@@ -58,27 +71,34 @@ export async function POST(req: Request) {
       alt_method: decision.alt_method ?? null,
       reasoning: decision.reasoning,
       confidence: decision.confidence,
-      created_at: new Date().toISOString(),
-    });
+      created_at: now,
+    };
 
-    demoStore.recoveryMessages.push({
+    const message = {
       id: crypto.randomUUID(),
       transaction_id: txnId,
       channel: decision.drafted_message.channel,
       body: decision.drafted_message.body,
-      created_at: new Date().toISOString(),
-    });
+      created_at: now,
+    };
+
+    await supabase.from("agent_actions").insert(action);
+    await supabase.from("recovery_messages").insert(message);
 
     generated.push(txnId);
 
-    // Auto-recover some after delay simulation
+    // Auto-recover simulation: update status in Supabase
     if (Math.random() > 0.4) {
-      setTimeout(() => {
-        const t = demoStore.transactions.get(txnId);
-        if (t) {
-          t.status = "recovered";
-          t.recovered_at = new Date().toISOString();
-          demoStore.transactions.set(txnId, t);
+      setTimeout(async () => {
+        const client = createServiceClient();
+        if (client) {
+          await client
+            .from("transactions")
+            .update({
+              status: "recovered",
+              recovered_at: new Date().toISOString(),
+            })
+            .eq("id", txnId);
         }
       }, 3000 + Math.random() * 5000);
     }
@@ -94,7 +114,7 @@ export async function POST(req: Request) {
       count: count,
     });
 
-    demoStore.routeClusters.unshift({
+    const cluster = {
       id: `cluster_${crypto.randomUUID().slice(0, 8)}`,
       user_id: userId,
       issuer: "HDFC",
@@ -111,7 +131,9 @@ export async function POST(req: Request) {
       history: [],
       created_at: new Date().toISOString(),
       resolved_at: null,
-    });
+    };
+
+    await supabase.from("route_clusters").insert(cluster);
   }
 
   return NextResponse.json({ generated, count: generated.length });
