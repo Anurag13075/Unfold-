@@ -5,7 +5,11 @@ import { ReportsClient } from "./reports-client";
 export default async function ReportsPage() {
   const session = await auth();
   const userId = session!.user!.id;
+
+  const stats = await getDashboardStats(userId);
+  const reports = await getReportsData(userId);
+
   return (
-    <ReportsClient stats={getDashboardStats(userId)} reports={getReportsData(userId)} />
+    <ReportsClient stats={stats} reports={reports} />
   );
 }

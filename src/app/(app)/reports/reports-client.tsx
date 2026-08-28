@@ -15,8 +15,8 @@ import { Card } from "@/components/ui/card";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
 
 interface ReportsClientProps {
-  stats: ReturnType<typeof import("@/lib/data").getDashboardStats>;
-  reports: ReturnType<typeof import("@/lib/data").getReportsData>;
+  stats: Awaited<ReturnType<typeof import("@/lib/data").getDashboardStats>>;
+  reports: Awaited<ReturnType<typeof import("@/lib/data").getReportsData>>;
 }
 
 export function ReportsClient({ stats, reports }: ReportsClientProps) {

@@ -1,10 +1,10 @@
 import { auth } from "@/lib/auth";
-import { demoStore } from "@/lib/supabase";
+import { getUserById } from "@/lib/users";
 import { SettingsClient } from "./settings-client";
 
 export default async function SettingsPage() {
   const session = await auth();
-  const user = demoStore.users.get(session!.user!.id);
+  const user = session?.user?.id ? await getUserById(session.user.id) : null;
 
   return (
     <SettingsClient

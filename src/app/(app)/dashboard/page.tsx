@@ -6,9 +6,9 @@ export default async function DashboardPage() {
   const session = await auth();
   const userId = session!.user!.id;
 
-  const transactions = getTransactions(userId);
-  const clusters = getRouteClusters(userId);
-  const stats = getDashboardStats(userId);
+  const transactions = await getTransactions(userId);
+  const clusters = await getRouteClusters(userId);
+  const stats = await getDashboardStats(userId);
 
   return (
     <DashboardClient transactions={transactions} clusters={clusters} stats={stats} />

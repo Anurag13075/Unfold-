@@ -15,8 +15,8 @@ import type { Transaction, TransactionFilter } from "@/types";
 
 interface DashboardClientProps {
   transactions: Transaction[];
-  clusters: ReturnType<typeof import("@/lib/data").getRouteClusters>;
-  stats: ReturnType<typeof import("@/lib/data").getDashboardStats>;
+  clusters: Awaited<ReturnType<typeof import("@/lib/data").getRouteClusters>>;
+  stats: Awaited<ReturnType<typeof import("@/lib/data").getDashboardStats>>;
 }
 
 export function DashboardClient({ transactions, clusters, stats }: DashboardClientProps) {

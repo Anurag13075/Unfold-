@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { demoStore } from "@/lib/supabase";
+import { getUserById } from "@/lib/users";
 
 export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -8,7 +8,7 @@ export default async function OnboardingLayout({ children }: { children: React.R
     redirect("/sign-in");
   }
 
-  const user = demoStore.users.get(session.user.id);
+  const user = await getUserById(session.user.id);
   if (user?.onboarded_at) {
     redirect("/dashboard");
   }
