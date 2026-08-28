@@ -56,21 +56,41 @@ export default function OnboardingPage() {
             <div className="space-y-6 animate-[fadeIn_200ms_ease-out]">
               <div>
                 <h1 className="font-display text-display-l text-text-primary mb-2">
-                  Connect Razorpay
+                  Connect Razorpay & Webhook
                 </h1>
                 <p className="text-body-m text-text-secondary">
-                  Enter your test-mode API keys. Production keys work too — we encrypt everything at rest.
+                  Enter your Razorpay test mode keys and add the Webhook URL to your Razorpay dashboard to process live payment failures.
                 </p>
               </div>
+
+              <div className="bg-surface-800 border border-pulse-500/30 rounded-card p-4">
+                <p className="text-mono-s text-text-tertiary mb-1 font-mono uppercase">Your Webhook URL</p>
+                <div className="flex items-center justify-between gap-2 bg-ink-950 p-2.5 rounded border border-border">
+                  <code className="font-mono text-mono-s text-pulse-500 truncate select-all">
+                    https://unfold-zeta-one.vercel.app/api/webhooks/razorpay
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText("https://unfold-zeta-one.vercel.app/api/webhooks/razorpay")}
+                    className="px-2.5 py-1 bg-surface-700 hover:bg-surface-600 rounded text-mono-s font-mono text-text-primary transition-colors shrink-0"
+                  >
+                    Copy
+                  </button>
+                </div>
+                <p className="text-mono-s text-text-tertiary mt-2">
+                  Add this in Razorpay Dashboard ➔ Settings ➔ Webhooks. Select <strong className="text-text-secondary">payment.failed</strong> & <strong className="text-text-secondary">payment.captured</strong>.
+                </p>
+              </div>
+
               <Input
-                label="Key ID"
+                label="Razorpay Key ID"
                 mono
                 placeholder="rzp_test_..."
                 value={razorpayKeyId}
                 onChange={(e) => setRazorpayKeyId(e.target.value)}
               />
               <Input
-                label="Key Secret"
+                label="Razorpay Key Secret"
                 mono
                 secret
                 placeholder="••••••••"
@@ -80,7 +100,6 @@ export default function OnboardingPage() {
               <Button
                 className="w-full"
                 onClick={() => setStep(1)}
-                disabled={!razorpayKeyId}
               >
                 Continue
               </Button>

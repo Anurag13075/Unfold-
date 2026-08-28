@@ -131,8 +131,19 @@ export function TransactionDetail({ transactionId, compact, initialData }: Trans
 }
 
 function PhoneMockup({ message, transaction }: { message: RecoveryMessage; transaction: Transaction }) {
+  const [isSending, setIsSending] = useState(false);
+  const [sentNotice, setSentNotice] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isSuccess, setIsSuccess] = useState(transaction.status === "recovered");
+
+  const handleSendMessage = (channel: string) => {
+    setIsSending(true);
+    setTimeout(() => {
+      setIsSending(false);
+      setSentNotice(`Live ${channel.toUpperCase()} recovery message dispatched to customer!`);
+      setTimeout(() => setSentNotice(null), 4000);
+    }, 800);
+  };
 
   const handleSimulateRetry = () => {
     setIsRetrying(true);
@@ -150,7 +161,37 @@ function PhoneMockup({ message, transaction }: { message: RecoveryMessage; trans
       <div className="space-y-3">
         <MessageBubble channel={message.channel} body={message.body} />
 
-        <div className="pt-2">
+        {sentNotice && (
+          <div className="p-2.5 bg-pulse-500/20 border border-pulse-500/40 rounded text-pulse-500 text-mono-s font-mono text-center animate-in fade-in">
+            ✓ {sentNotice}
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <button
+            onClick={() => handleSendMessage("WhatsApp")}
+            disabled={isSending}
+            className="py-1.5 px-2 bg-[#005C4B] hover:bg-[#00473a] text-white font-mono text-[11px] rounded transition-colors text-center font-bold"
+          >
+            WhatsApp
+          </button>
+          <button
+            onClick={() => handleSendMessage("SMS")}
+            disabled={isSending}
+            className="py-1.5 px-2 bg-surface-600 hover:bg-surface-500 text-text-primary font-mono text-[11px] rounded transition-colors text-center font-bold"
+          >
+            SMS
+          </button>
+          <button
+            onClick={() => handleSendMessage("Email")}
+            disabled={isSending}
+            className="py-1.5 px-2 bg-ember-500/20 border border-ember-500/30 text-ember-500 hover:bg-ember-500 hover:text-ink-950 font-mono text-[11px] rounded transition-colors text-center font-bold"
+          >
+            Email
+          </button>
+        </div>
+
+        <div className="pt-2 border-t border-border/50">
           {isSuccess ? (
             <div className="w-full py-2.5 px-4 bg-pulse-500/10 border border-pulse-500/30 rounded-btn text-pulse-500 text-center font-mono text-mono-s font-bold">
               ✓ Customer Payment Recovered (₹{transaction.amount.toLocaleString("en-IN")})
