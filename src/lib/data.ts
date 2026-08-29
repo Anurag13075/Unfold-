@@ -22,7 +22,7 @@ export async function getTransactions(userId: string, filter?: string): Promise<
   const { data, error } = await query;
   if (error || !data) return [];
 
-  return data.map((t) => ({
+  return data.map((t: any) => ({
     id: t.id,
     razorpay_payment_id: t.razorpay_payment_id,
     amount: t.amount,
@@ -38,15 +38,16 @@ export async function getTransactions(userId: string, filter?: string): Promise<
   }));
 }
 
-export async function getTransaction(id: string): Promise<Transaction | null> {
+export async function getTransaction(id: string, userId?: string): Promise<Transaction | null> {
   const supabase = createServiceClient();
   if (!supabase) return null;
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  let query = supabase.from("transactions").select("*").eq("id", id);
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query.maybeSingle();
 
   if (error || !data) return null;
 
@@ -78,7 +79,7 @@ export async function getAgentActions(transactionId: string): Promise<AgentActio
 
   if (error || !data) return [];
 
-  return data.map((a) => ({
+  return data.map((a: any) => ({
     id: a.id,
     transaction_id: a.transaction_id,
     decision: a.decision as AgentAction["decision"],
@@ -124,7 +125,7 @@ export async function getRouteClusters(userId: string): Promise<RouteCluster[]> 
 
   if (error || !data) return [];
 
-  const clusters: RouteCluster[] = data.map((c) => ({
+  const clusters: RouteCluster[] = data.map((c: any) => ({
     id: c.id,
     issuer: c.issuer,
     method: c.method,
@@ -196,9 +197,9 @@ export async function getReportsData(userId: string) {
       .in("transaction_id", txnIdsArray);
 
     if (messages) {
-      waMsgs = messages.filter((m) => m.channel === "whatsapp").length;
-      smsMsgs = messages.filter((m) => m.channel === "sms").length;
-      emailMsgs = messages.filter((m) => m.channel === "email").length;
+      waMsgs = messages.filter((m: any) => m.channel === "whatsapp").length;
+      smsMsgs = messages.filter((m: any) => m.channel === "sms").length;
+      emailMsgs = messages.filter((m: any) => m.channel === "email").length;
     }
   }
 

@@ -13,6 +13,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [razorpayKeyId, setRazorpayKeyId] = useState("");
   const [razorpaySecret, setRazorpaySecret] = useState("");
+  const [razorpayWebhookSecret, setRazorpayWebhookSecret] = useState("");
 
   const completeOnboarding = async () => {
     await fetch("/api/onboarding/complete", {
@@ -21,6 +22,7 @@ export default function OnboardingPage() {
       body: JSON.stringify({
         razorpay_key_id: razorpayKeyId,
         razorpay_key_secret: razorpaySecret,
+        razorpay_webhook_secret: razorpayWebhookSecret,
       }),
     });
     router.push("/dashboard");
@@ -59,7 +61,7 @@ export default function OnboardingPage() {
                   Connect Razorpay
                 </h1>
                 <p className="text-body-m text-text-secondary">
-                  Enter your test-mode API keys. Production keys work too — we encrypt everything at rest.
+                  Enter your API keys &amp; Webhook Secret. We encrypt everything at rest.
                 </p>
               </div>
               <Input
@@ -70,7 +72,15 @@ export default function OnboardingPage() {
                 onChange={(e) => setRazorpayKeyId(e.target.value)}
               />
               <Input
-                label="Key Secret"
+                label="Webhook Secret"
+                mono
+                secret
+                placeholder="••••••••"
+                value={razorpayWebhookSecret}
+                onChange={(e) => setRazorpayWebhookSecret(e.target.value)}
+              />
+              <Input
+                label="Key Secret (Optional)"
                 mono
                 secret
                 placeholder="••••••••"
@@ -80,7 +90,6 @@ export default function OnboardingPage() {
               <Button
                 className="w-full"
                 onClick={() => setStep(1)}
-                disabled={!razorpayKeyId}
               >
                 Continue
               </Button>

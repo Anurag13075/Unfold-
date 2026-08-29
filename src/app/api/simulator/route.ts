@@ -10,8 +10,10 @@ function randomFrom<T>(arr: T[]): T {
 }
 
 export async function POST(req: Request) {
-  const { userId = "demo-user-1", count = 1, injectCluster = false } = await req.json();
+  const { count = 1, injectCluster = false } = await req.json();
 
+  // The simulator is strictly isolated to the demo user account
+  const userId = "demo-user-1";
   await ensureUserExists(userId);
 
   const supabase = createServiceClient();

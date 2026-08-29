@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Warning, ArrowRight } from "@phosphor-icons/react";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { StatusChip } from "@/components/ui/status-chip";
 import { Waveform } from "@/components/waveform/waveform";
@@ -14,12 +15,20 @@ import { useRouter } from "next/navigation";
 import type { Transaction, TransactionFilter } from "@/types";
 
 interface DashboardClientProps {
+  userId: string;
+  hasWebhookSecret: boolean;
   transactions: Transaction[];
   clusters: Awaited<ReturnType<typeof import("@/lib/data").getRouteClusters>>;
   stats: Awaited<ReturnType<typeof import("@/lib/data").getDashboardStats>>;
 }
 
-export function DashboardClient({ transactions, clusters, stats }: DashboardClientProps) {
+export function DashboardClient({
+  userId,
+  hasWebhookSecret,
+  transactions,
+  clusters,
+  stats,
+}: DashboardClientProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<TransactionFilter>("all");
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
@@ -68,6 +77,37 @@ export function DashboardClient({ transactions, clusters, stats }: DashboardClie
       </header>
 
       <div className="p-6">
+        {/* Onboarding Banner Nudge */}
+        {!hasWebhookSecret && (
+          <div className="mb-6 p-4 bg-surface-800 border border-amber-500/30 rounded-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0 mt-0.5 sm:mt-0">
+                <Warning className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-display-m text-text-primary">
+                  Connect Razorpay to Start Recovering Payments
+                </h3>
+                <p className="text-body-m text-text-secondary mt-1">
+                  To receive and process live payment failures, complete these setup steps in order:
+                </p>
+                <ol className="list-decimal list-inside text-body-s text-text-tertiary mt-1.5 space-y-0.5">
+                  <li>Navigate to Settings and save your <strong>Razorpay Webhook Secret</strong> first.</li>
+                  <li>Copy your unique per-merchant <strong>Webhook URL</strong> from Settings and add it to your Razorpay Dashboard.</li>
+                </ol>
+              </div>
+            </div>
+
+            <Link
+              href="/settings"
+              className="px-4 py-2 bg-ember-500 hover:bg-ember-700 text-ink-950 font-medium text-body-m rounded-btn transition-colors shrink-0 flex items-center gap-2"
+            >
+              <span>Go to Settings</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
+
         <SimulatorControls onSimulate={handleSimulate} isLoading={isSimulating} />
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6">
           {/* Pulse Ledger */}
@@ -88,9 +128,13 @@ export function DashboardClient({ transactions, clusters, stats }: DashboardClie
 
               {filtered.length === 0 ? (
                 <div className="py-20 text-center">
-                  <p className="font-display text-display-m text-text-primary">No failures yet — good sign</p>
-                  <p className="mt-2 text-body-m text-text-secondary">
-                    Declines and recoveries will appear here in real time.
+                  <p className="font-display text-display-m text-text-primary">
+                    {!hasWebhookSecret ? "Razorpay Not Connected Yet" : "No failures yet — good sign"}
+                  </p>
+                  <p className="mt-2 text-body-m text-text-secondary max-w-md mx-auto">
+                    {!hasWebhookSecret
+                      ? "Connect your Razorpay account in Settings to start tracking and recovering failed payments."
+                      : "Declines and recoveries will appear here in real time."}
                   </p>
                 </div>
               ) : (
