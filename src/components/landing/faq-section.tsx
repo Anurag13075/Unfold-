@@ -28,7 +28,7 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="border-t border-border py-20 md:py-32">
+    <section id="faq" className="border-t border-border py-20 md:py-32">
       <div className="max-w-container mx-auto px-4 md:px-8">
         <ScrollReveal>
           <h2 className="font-display text-display-l text-text-primary mb-12 text-center">
