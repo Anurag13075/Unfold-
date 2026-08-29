@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { maskKeyId } from "@/lib/encryption";
+import { PaperPlaneTilt, CheckCircle, Spinner, WarningCircle } from "@phosphor-icons/react";
 
 interface SettingsClientProps {
   userId: string;
@@ -33,6 +33,18 @@ export function SettingsClient({
   const [message, setMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [hostOrigin, setHostOrigin] = useState("");
+
+  // Outreach testing state
+  const [testChannel, setTestChannel] = useState<"email" | "sms" | "telegram" | "webhook">("email");
+  const [testRecipient, setTestRecipient] = useState("");
+  const [customResendKey, setCustomResendKey] = useState("");
+  const [customTwilioSid, setCustomTwilioSid] = useState("");
+  const [customTwilioToken, setCustomTwilioToken] = useState("");
+  const [customTwilioFrom, setCustomTwilioFrom] = useState("");
+  const [customTelegramToken, setCustomTelegramToken] = useState("");
+  const [customTelegramChat, setCustomTelegramChat] = useState("");
+  const [testingOutreach, setTestingOutreach] = useState(false);
+  const [testResult, setTestResult] = useState<any>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -80,6 +92,39 @@ export function SettingsClient({
     }
   };
 
+  const handleTestOutreach = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTestingOutreach(true);
+    setTestResult(null);
+
+    try {
+      const res = await fetch("/api/recovery/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: testChannel,
+          recipient: testRecipient,
+          customKeys: {
+            resendApiKey: customResendKey,
+            twilioSid: customTwilioSid,
+            twilioToken: customTwilioToken,
+            twilioFrom: customTwilioFrom,
+            telegramBotToken: customTelegramToken,
+            telegramChatId: customTelegramChat,
+            webhookUrl: testRecipient,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      setTestResult(data);
+    } catch (err: any) {
+      setTestResult({ error: err.message || "Failed to trigger test" });
+    } finally {
+      setTestingOutreach(false);
+    }
+  };
+
   return (
     <>
       <header className="sticky top-0 z-20 h-16 bg-ink-950 border-b border-border px-6 flex items-center">
@@ -88,6 +133,7 @@ export function SettingsClient({
 
       <div className="p-6 max-w-container">
         <div className="grid grid-cols-12 gap-6 max-w-3xl">
+          {/* Razorpay Connection */}
           <div className="col-span-12">
             <Card>
               <div className="flex items-center justify-between mb-4">
@@ -176,37 +222,166 @@ export function SettingsClient({
             </Card>
           </div>
 
+          {/* Real Multi-Channel Outreach Dispatch Tester */}
           <div className="col-span-12">
             <Card>
-              <h2 className="font-display text-display-m text-text-primary mb-4">
-                Notification Channels
-              </h2>
-              <div className="space-y-4">
-                <ChannelRow name="WhatsApp" connected={hasWhatsapp} />
-                <ChannelRow name="SMS" connected={hasSms} />
-                <ChannelRow name="Email" connected={hasEmail} />
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-display-m text-text-primary">
+                  Multi-Channel Recovery Outreach
+                </h2>
+                <span className="font-mono text-mono-s px-2.5 py-1 rounded-full bg-ember-wash text-ember-500 border border-ember-500/30">
+                  Live Dispatch Tester
+                </span>
               </div>
-            </Card>
-          </div>
 
-          <div className="col-span-12">
-            <Card>
-              <h2 className="font-display text-display-m text-text-primary mb-4">Team</h2>
-              <div className="flex gap-3 mb-4">
-                <Input placeholder="Invite by email" className="flex-1" />
-                <Button variant="ghost">Invite</Button>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-btn bg-surface-700 flex items-center justify-center text-body-s">
-                  Y
+              <p className="text-body-s text-text-secondary mb-6">
+                Test sending real recovery messages over Email (Resend), SMS/WhatsApp (Twilio), Telegram, or custom Webhooks. If custom API keys are empty, Undrop gracefully simulates the dispatch.
+              </p>
+
+              <form onSubmit={handleTestOutreach} className="space-y-4">
+                <div className="grid grid-cols-4 gap-2 p-1 bg-surface-900 rounded-lg border border-border">
+                  {(["email", "sms", "telegram", "webhook"] as const).map((ch) => (
+                    <button
+                      key={ch}
+                      type="button"
+                      onClick={() => setTestChannel(ch)}
+                      className={`py-1.5 text-mono-s font-mono rounded-md uppercase transition ${
+                        testChannel === ch
+                          ? "bg-surface-700 text-ember-500 shadow-sm font-semibold"
+                          : "text-text-tertiary hover:text-text-primary"
+                      }`}
+                    >
+                      {ch}
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <p className="text-body-m text-text-primary">You</p>
-                  <span className="font-mono text-mono-s text-text-tertiary px-2 py-0.5 bg-surface-600 rounded-chip">
-                    Owner
-                  </span>
+
+                {testChannel === "email" && (
+                  <div className="space-y-3">
+                    <Input
+                      label="Recipient Email Address"
+                      placeholder="e.g. merchant@example.com"
+                      value={testRecipient}
+                      onChange={(e) => setTestRecipient(e.target.value)}
+                    />
+                    <Input
+                      label="Custom Resend API Key (Optional)"
+                      mono
+                      secret
+                      placeholder="re_123456789... (Leave empty to use env / simulation)"
+                      value={customResendKey}
+                      onChange={(e) => setCustomResendKey(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {testChannel === "sms" && (
+                  <div className="space-y-3">
+                    <Input
+                      label="Recipient Phone Number (E.164 format)"
+                      placeholder="e.g. +919876543210"
+                      value={testRecipient}
+                      onChange={(e) => setTestRecipient(e.target.value)}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        label="Twilio Account SID (Optional)"
+                        mono
+                        placeholder="AC..."
+                        value={customTwilioSid}
+                        onChange={(e) => setCustomTwilioSid(e.target.value)}
+                      />
+                      <Input
+                        label="Twilio Auth Token (Optional)"
+                        mono
+                        secret
+                        placeholder="••••••••"
+                        value={customTwilioToken}
+                        onChange={(e) => setCustomTwilioToken(e.target.value)}
+                      />
+                    </div>
+                    <Input
+                      label="Twilio Phone Number (Optional)"
+                      mono
+                      placeholder="+1234567890"
+                      value={customTwilioFrom}
+                      onChange={(e) => setCustomTwilioFrom(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {testChannel === "telegram" && (
+                  <div className="space-y-3">
+                    <Input
+                      label="Telegram Bot Token (Optional)"
+                      mono
+                      secret
+                      placeholder="123456789:ABCdef..."
+                      value={customTelegramToken}
+                      onChange={(e) => setCustomTelegramToken(e.target.value)}
+                    />
+                    <Input
+                      label="Telegram Chat ID (Optional)"
+                      mono
+                      placeholder="-100123456789 or @channel"
+                      value={customTelegramChat}
+                      onChange={(e) => setCustomTelegramChat(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {testChannel === "webhook" && (
+                  <div className="space-y-3">
+                    <Input
+                      label="Custom Target Webhook URL"
+                      placeholder="https://example.com/api/outreach-webhook"
+                      value={testRecipient}
+                      onChange={(e) => setTestRecipient(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <Button type="submit" disabled={testingOutreach} className="w-full justify-center">
+                    {testingOutreach ? (
+                      <>
+                        <Spinner className="w-4 h-4 animate-spin mr-2" /> Dispatching Test...
+                      </>
+                    ) : (
+                      <>
+                        <PaperPlaneTilt size={16} className="mr-2" /> Dispatch Test {testChannel.toUpperCase()} Recovery
+                      </>
+                    )}
+                  </Button>
                 </div>
-              </div>
+              </form>
+
+              {testResult && (
+                <div className="mt-4 p-4 bg-surface-900 border border-border rounded-xl space-y-2">
+                  <div className="flex items-center gap-2 font-mono text-mono-s">
+                    {testResult.result?.success ? (
+                      <span className="text-pulse-700 flex items-center gap-1">
+                        <CheckCircle size={16} /> Dispatched Successfully ({testResult.result?.provider})
+                      </span>
+                    ) : (
+                      <span className="text-flatline-500 flex items-center gap-1">
+                        <WarningCircle size={16} /> Dispatch Issue: {testResult.error || testResult.result?.error}
+                      </span>
+                    )}
+                  </div>
+                  {testResult.result?.details && (
+                    <p className="font-mono text-mono-s text-text-secondary">{testResult.result.details}</p>
+                  )}
+                  {testResult.recoveryUrl && (
+                    <p className="font-mono text-mono-s text-ember-500">
+                      Generated Recovery Link:{" "}
+                      <a href={testResult.recoveryUrl} target="_blank" rel="noreferrer" className="underline">
+                        {testResult.recoveryUrl}
+                      </a>
+                    </p>
+                  )}
+                </div>
+              )}
             </Card>
           </div>
 
@@ -218,31 +393,10 @@ export function SettingsClient({
                 value={workspaceName}
                 onChange={(e) => setWorkspaceName(e.target.value)}
               />
-              <div className="mt-8 pt-6 border-t border-border">
-                <button className="text-body-m text-flatline-500 hover:text-flatline-700 transition-colors">
-                  Delete workspace
-                </button>
-              </div>
             </Card>
           </div>
         </div>
       </div>
     </>
-  );
-}
-
-function ChannelRow({ name, connected }: { name: string; connected: boolean }) {
-  return (
-    <div className="flex items-center justify-between py-2">
-      <div>
-        <p className="text-body-m text-text-primary">{name}</p>
-        <p className="font-mono text-mono-s text-text-tertiary">
-          {connected ? "••••••••connected" : "Not configured"}
-        </p>
-      </div>
-      <Button variant="ghost" size="sm">
-        {connected ? "Disconnect" : "Connect"}
-      </Button>
-    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase";
 import { ensureUserExists } from "@/lib/users";
 import { analyzeTransaction } from "@/lib/agent";
+import { sendEmailOutreach, sendSmsOutreach, sendTelegramOutreach } from "@/lib/outreach";
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 
@@ -93,17 +94,50 @@ export async function POST(req: Request) {
       created_at: now,
     };
 
+    const host = req.headers.get("host") || "localhost:3000";
+    const protocol = host.includes("localhost") ? "http" : "https";
+    const recoveryUrl = `${protocol}://${host}/recover/${txnId}`;
+
+    const channel = decision.drafted_message.channel;
+    const bodyContent = `${decision.drafted_message.body}\nRecovery link: ${recoveryUrl}`;
+
     const messageId = crypto.randomUUID();
     const message = {
       id: messageId,
       transaction_id: txnId,
-      channel: decision.drafted_message.channel,
-      body: decision.drafted_message.body,
+      channel: channel,
+      body: bodyContent,
       created_at: now,
     };
 
     await supabase.from("agent_actions").insert(action);
     await supabase.from("recovery_messages").insert(message);
+
+    // Auto-dispatch outreach
+    const customerEmail = payload.email || "customer@example.com";
+    const customerContact = payload.contact || "+919876543210";
+
+    if (channel === "email") {
+      await sendEmailOutreach({
+        to: customerEmail,
+        subject: `Payment Recovery Notice for ₹${txn.amount}`,
+        merchantName: txn.merchant_name,
+        amount: txn.amount,
+        recoveryUrl,
+      });
+    } else {
+      await sendSmsOutreach({
+        to: customerContact,
+        body: decision.drafted_message.body,
+        recoveryUrl,
+      });
+    }
+
+    // Also send telegram alert if configured
+    await sendTelegramOutreach({
+      text: `Decline captured: ₹${txn.amount} via ${txn.method} (${txn.issuer}). AI decision: ${decision.decision}.`,
+      recoveryUrl,
+    });
   }
 
   return NextResponse.json({ status: "ok" });

@@ -4,7 +4,7 @@ import { formatCurrency, timeAgo } from "@/lib/utils";
 import { StatusChip } from "@/components/ui/status-chip";
 import { Waveform } from "@/components/waveform/waveform";
 import Link from "next/link";
-import { ArrowLeft } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowSquareOut, PaperPlaneTilt, CheckCircle, Spinner } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type { AgentAction, RecoveryMessage, Transaction } from "@/types";
 
@@ -38,7 +38,7 @@ export function TransactionDetail({ transactionId, compact, initialData }: Trans
   }, [transactionId, initialData]);
 
   if (loading) {
-    return <p className="text-text-secondary">Loading...</p>;
+    return <p className="text-text-secondary font-mono text-mono-s">Loading details...</p>;
   }
 
   if (!data?.transaction) {
@@ -121,7 +121,7 @@ export function TransactionDetail({ transactionId, compact, initialData }: Trans
       {message && (
         <div>
           <p className="text-body-s uppercase tracking-wide text-text-secondary mb-3">
-            Interactive Customer Phone Frame & Recovery Action
+            Interactive Customer Outreach Preview
           </p>
           <PhoneMockup message={message} transaction={transaction} />
         </div>
@@ -131,45 +131,78 @@ export function TransactionDetail({ transactionId, compact, initialData }: Trans
 }
 
 function PhoneMockup({ message, transaction }: { message: RecoveryMessage; transaction: Transaction }) {
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(transaction.status === "recovered");
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatchStatus, setDispatchStatus] = useState<string | null>(null);
+  const recoveryUrl = typeof window !== "undefined" ? `${window.location.origin}/recover/${transaction.id}` : `/recover/${transaction.id}`;
 
-  const handleSimulateRetry = () => {
-    setIsRetrying(true);
-    setTimeout(() => {
-      setIsRetrying(false);
-      setIsSuccess(true);
-      transaction.status = "recovered";
-      transaction.recovered_at = new Date().toISOString();
-    }, 1500);
+  const handleDispatchOutreach = async () => {
+    setDispatching(true);
+    setDispatchStatus(null);
+    try {
+      const res = await fetch("/api/recovery/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: message.channel || "email",
+          transactionId: transaction.id,
+        }),
+      });
+
+      const resData = await res.json();
+      if (res.ok && resData.success) {
+        setDispatchStatus(`Outreach Sent! Provider: ${resData.result?.provider}`);
+      } else {
+        setDispatchStatus(`Dispatch failed: ${resData.error || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      setDispatchStatus(`Error: ${err.message}`);
+    } finally {
+      setDispatching(false);
+    }
   };
 
   return (
-    <div className="bg-ink-950 border border-border rounded-2xl p-4 max-w-sm shadow-modal">
-      <div className="w-24 h-4 bg-surface-600 rounded-full mx-auto mb-4" />
+    <div className="bg-ink-950 border border-border rounded-2xl p-4 max-w-sm shadow-modal space-y-4">
+      <div className="w-24 h-3 bg-surface-600 rounded-full mx-auto" />
       <div className="space-y-3">
         <MessageBubble channel={message.channel} body={message.body} />
 
-        <div className="pt-2">
-          {isSuccess ? (
-            <div className="w-full py-2.5 px-4 bg-pulse-500/10 border border-pulse-500/30 rounded-btn text-pulse-500 text-center font-mono text-mono-s font-bold">
-              ✓ Customer Payment Recovered (₹{transaction.amount.toLocaleString("en-IN")})
-            </div>
-          ) : (
-            <button
-              onClick={handleSimulateRetry}
-              disabled={isRetrying}
-              className="w-full py-2.5 px-4 bg-pulse-500 hover:bg-pulse-700 text-ink-950 font-mono text-mono-s font-bold rounded-btn transition-colors flex items-center justify-center gap-2"
+        <div className="p-3 bg-surface-900 border border-border rounded-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-mono-s text-text-tertiary">Public Checkout Link</span>
+            <Link
+              href={`/recover/${transaction.id}`}
+              target="_blank"
+              className="inline-flex items-center gap-1 font-mono text-mono-s text-ember-500 hover:underline"
             >
-              {isRetrying ? (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  <span>Customer Retrying Payment...</span>
-                </>
-              ) : (
-                <span>Simulate Customer One-Tap Retry</span>
-              )}
-            </button>
+              Open Link <ArrowSquareOut size={14} />
+            </Link>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <button
+            onClick={handleDispatchOutreach}
+            disabled={dispatching}
+            className="w-full py-2.5 px-4 bg-ember-500 hover:bg-ember-700 text-ink-950 font-mono text-mono-s font-bold rounded-btn transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {dispatching ? (
+              <>
+                <Spinner className="w-4 h-4 animate-spin" />
+                Dispatching Message...
+              </>
+            ) : (
+              <>
+                <PaperPlaneTilt size={16} weight="bold" />
+                Dispatch Real Outreach ({message.channel.toUpperCase()})
+              </>
+            )}
+          </button>
+
+          {dispatchStatus && (
+            <p className="font-mono text-mono-s text-center text-pulse-700 bg-pulse-500/10 p-2 rounded-md">
+              {dispatchStatus}
+            </p>
           )}
         </div>
       </div>
