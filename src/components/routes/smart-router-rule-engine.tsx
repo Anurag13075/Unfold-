@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Cpu, Lightning, ShieldCheck, ArrowsMerge, CheckCircle } from "@phosphor-icons/react";
+import { Cpu, Lightning, ShieldCheck, ArrowsMerge, CheckCircle, DownloadSimple, Copy, Code, Spinner } from "@phosphor-icons/react";
 
 interface SmartRoutingRule {
   id: string;
@@ -41,6 +41,10 @@ export function SmartRouterRuleEngine() {
   ]);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [jsonConfig, setJsonConfig] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   const toggleRule = (id: string) => {
     setRules((prev) =>
@@ -58,8 +62,32 @@ export function SmartRouterRuleEngine() {
     );
   };
 
+  const handleExportConfig = async () => {
+    setExportLoading(true);
+    try {
+      const res = await fetch("/api/routes/export", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.jsonFormatted) {
+        setJsonConfig(data.jsonFormatted);
+        setShowExportModal(true);
+      } else {
+        alert("Failed to export router rules.");
+      }
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleCopyConfig = () => {
+    navigator.clipboard.writeText(jsonConfig);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="bg-surface-800 border border-border rounded-card p-5 mb-8 shadow-card">
+    <div className="bg-surface-800 border border-border rounded-card p-5 mb-8 shadow-card relative">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-md bg-pulse-500/10 border border-pulse-500/30 flex items-center justify-center text-pulse-500">
@@ -78,12 +106,27 @@ export function SmartRouterRuleEngine() {
           </div>
         </div>
 
-        {toastMessage && (
-          <div className="px-3 py-1.5 rounded bg-pulse-500/20 border border-pulse-500/40 text-pulse-500 font-mono text-mono-s flex items-center gap-2 animate-in fade-in">
-            <CheckCircle className="w-4 h-4" />
-            <span>{toastMessage}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {toastMessage && (
+            <div className="px-3 py-1.5 rounded bg-pulse-500/20 border border-pulse-500/40 text-pulse-500 font-mono text-mono-s flex items-center gap-2 animate-in fade-in">
+              <CheckCircle className="w-4 h-4" />
+              <span>{toastMessage}</span>
+            </div>
+          )}
+
+          <button
+            onClick={handleExportConfig}
+            disabled={exportLoading}
+            className="px-3 py-2 rounded-btn bg-surface-700 hover:bg-surface-600 text-text-primary font-mono text-mono-s border border-border transition-colors flex items-center gap-2 disabled:opacity-50"
+          >
+            {exportLoading ? (
+              <Spinner className="w-4 h-4 animate-spin" />
+            ) : (
+              <DownloadSimple className="w-4 h-4 text-ember-500" />
+            )}
+            <span>Export Smart Router Rules</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -132,6 +175,48 @@ export function SmartRouterRuleEngine() {
           </div>
         ))}
       </div>
+
+      {/* JSON Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 bg-ink-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-800 border border-border-strong rounded-card max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Code className="w-5 h-5 text-ember-500" />
+                <h3 className="font-display text-display-m text-text-primary">
+                  Razorpay Smart Router Config Payload
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="text-text-tertiary hover:text-text-primary font-mono text-mono-s"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <p className="text-body-s text-text-secondary">
+              This formatted JSON rule payload matches Razorpay Smart Router specifications. Copy and import this payload into your Razorpay Smart Router configuration or sync directly.
+            </p>
+
+            <div className="relative">
+              <pre className="bg-ink-950 p-4 rounded-lg font-mono text-mono-s text-text-primary max-h-80 overflow-y-auto border border-border select-all">
+                {jsonConfig}
+              </pre>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={handleCopyConfig}
+                className="px-4 py-2 rounded-btn bg-ember-500 hover:bg-ember-700 text-ink-950 font-mono text-mono-s font-bold transition-colors flex items-center gap-2"
+              >
+                <Copy className="w-4 h-4" />
+                {copied ? "Copied Payload!" : "Copy Payload JSON"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
