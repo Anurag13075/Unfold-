@@ -1,9 +1,14 @@
+import { auth } from "@/lib/auth";
 import { getAgentActions, getRecoveryMessage, getTransaction } from "@/lib/data";
 import { TransactionDetail } from "@/components/transactions/transaction-detail";
 import { notFound } from "next/navigation";
 
 export default async function TransactionPage({ params }: { params: { id: string } }) {
-  const transaction = await getTransaction(params.id);
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) notFound();
+
+  const transaction = await getTransaction(params.id, userId);
   if (!transaction) notFound();
 
   const actions = await getAgentActions(params.id);

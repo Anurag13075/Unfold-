@@ -9,7 +9,14 @@ export const supabase =
     ? createClient<Database>(supabaseUrl, supabaseAnonKey)
     : null;
 
+let mockServiceClient: any = null;
+
+export function setMockServiceClient(client: any) {
+  mockServiceClient = client;
+}
+
 export function createServiceClient() {
+  if (mockServiceClient) return mockServiceClient;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
   if (!supabaseUrl || !serviceKey) return null;
   return createClient<Database>(supabaseUrl, serviceKey);

@@ -28,6 +28,7 @@ export interface DbUser {
   workspace_name: string;
   razorpay_key_id: string | null;
   razorpay_key_secret_enc: string | null;
+  razorpay_webhook_secret_enc: string | null;
   whatsapp_key_enc: string | null;
   sms_key_enc: string | null;
   email_key_enc: string | null;
