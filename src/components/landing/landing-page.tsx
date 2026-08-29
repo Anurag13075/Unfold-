@@ -16,16 +16,16 @@ import { LandingFooter } from "./landing-footer";
 export function LandingPageContent() {
   return (
     <LandingThemeProvider>
-      <div className="relative min-h-screen bg-[var(--ink-950)] text-[var(--text-primary)] overflow-x-hidden">
+      <div className="relative min-h-screen bg-[var(--ink-950)] text-[var(--text-primary)] overflow-x-hidden transition-colors duration-300">
         {/* Full landing page background image container */}
         <div
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-90 transition-opacity duration-500"
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-85 dark:opacity-90 transition-opacity duration-500"
           style={{
             backgroundImage: "url('/landing-bg.png')",
           }}
         />
-        {/* Subtle overlay to enhance contrast and typography readability */}
-        <div className="fixed inset-0 z-0 bg-[var(--ink-950)]/40 pointer-events-none backdrop-brightness-95" />
+        {/* Theme-aware background overlay to ensure legibility and clean contrast in both light and dark mode */}
+        <div className="fixed inset-0 z-0 bg-[var(--ink-950)]/30 dark:bg-[var(--ink-950)]/50 pointer-events-none transition-colors duration-300" />
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <LandingNav />
