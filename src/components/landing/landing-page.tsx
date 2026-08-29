@@ -5,6 +5,7 @@ import { LandingNav } from "./landing-nav";
 import { HeroSection } from "./hero-section";
 import { ProblemSection } from "./problem-section";
 import { HowItWorksSection } from "./how-it-works-section";
+import { AutonomousRecoveryLifecycle } from "./autonomous-recovery-lifecycle";
 import { CapabilitiesBento } from "./capabilities-bento";
 import { RouteIntelligenceSpotlight } from "./route-intelligence-spotlight";
 import { ProofBand } from "./proof-band";
@@ -20,6 +21,7 @@ export function LandingPageContent() {
         <HeroSection />
         <ProblemSection />
         <HowItWorksSection />
+        <AutonomousRecoveryLifecycle />
         <CapabilitiesBento />
         <RouteIntelligenceSpotlight />
         <ProofBand />
