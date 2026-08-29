@@ -61,7 +61,7 @@ export function HowItWorksSection() {
 
   if (isMobile || reducedMotion) {
     return (
-      <section className="border-t border-border bg-ink-900 py-20 md:py-32">
+      <section id="how-it-works" className="border-t border-border bg-ink-900 py-20 md:py-32">
         <div className="max-w-container mx-auto px-4 md:px-8">
           <p className="text-body-s uppercase tracking-wide text-text-secondary mb-3">How it works</p>
           <h2 className="font-display text-display-l text-text-primary mb-16">
@@ -89,7 +89,7 @@ export function HowItWorksSection() {
   }
 
   return (
-    <section ref={sectionRef} className="relative border-t border-border bg-ink-900" style={{ height: "300vh" }}>
+    <section id="how-it-works" ref={sectionRef} className="relative border-t border-border bg-ink-900" style={{ height: "300vh" }}>
       <div className="sticky top-0 h-screen flex items-center overflow-hidden">
         <div className="max-w-container mx-auto px-4 md:px-8 w-full">
           <p className="text-body-s uppercase tracking-wide text-text-secondary mb-3">How it works</p>

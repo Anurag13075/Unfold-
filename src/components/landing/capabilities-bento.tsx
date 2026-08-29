@@ -46,7 +46,7 @@ export function CapabilitiesBento() {
   ];
 
   return (
-    <section className="border-t border-border py-20 md:py-32">
+    <section id="capabilities" className="border-t border-border py-20 md:py-32">
       <div className="max-w-container mx-auto px-4 md:px-8">
         <ScrollReveal>
           <p className="text-body-s uppercase tracking-wide text-text-secondary mb-3">Capabilities</p>
