@@ -22,7 +22,7 @@ export function RouteClusterCard({ cluster, compact }: RouteClusterCardProps) {
   return (
     <Card interactive className={cn(compact && "p-4")}>
       <p className="text-body-s uppercase tracking-wide text-text-secondary mb-2">
-        {cluster.issuer} · {cluster.method}
+        {cluster.issuer} / {cluster.method}
       </p>
       <h3 className="text-body-l text-text-primary mb-3">{cluster.headline}</h3>
 
@@ -32,12 +32,12 @@ export function RouteClusterCard({ cluster, compact }: RouteClusterCardProps) {
 
       <div className="flex items-center justify-between mb-3">
         <span className={cn("font-mono text-mono-s", severityColor[cluster.severity])}>
-          {(cluster.failure_rate * 100).toFixed(0)}% fail rate · baseline {(cluster.baseline_rate * 100).toFixed(0)}%
+          {(cluster.failure_rate * 100).toFixed(0)}% fail rate / baseline {(cluster.baseline_rate * 100).toFixed(0)}%
         </span>
         <span
           className={cn(
             "font-mono text-mono-s px-2 py-0.5 rounded-chip",
-            cluster.status === "active" ? "bg-flatline-wash text-flatline-700" : "bg-pulse-wash text-pulse-700"
+            cluster.status === "active" ? "bg-flatline-wash text-flatline-500" : "bg-pulse-wash text-pulse-500"
           )}
         >
           {cluster.status}
@@ -55,7 +55,7 @@ export function RouteClusterCard({ cluster, compact }: RouteClusterCardProps) {
                   key={h.date}
                   className={cn(
                     "font-mono text-mono-s px-2 py-1 rounded-chip",
-                    h.resolved ? "bg-pulse-wash text-pulse-700" : "bg-surface-600 text-text-tertiary"
+                    h.resolved ? "bg-pulse-wash text-pulse-500" : "bg-white/[.05] text-text-tertiary"
                   )}
                 >
                   {h.date.slice(5)}

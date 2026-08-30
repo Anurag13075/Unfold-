@@ -11,9 +11,9 @@ export function Card({ children, className, interactive }: CardProps) {
   return (
     <div
       className={cn(
-        "bg-surface-800 border border-border rounded-card p-5",
+        "app-surface rounded-card p-5",
         interactive &&
-          "transition-colors duration-150 hover:bg-surface-700 hover:border-border-strong cursor-pointer",
+          "transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:bg-surface-700 cursor-pointer",
         className
       )}
     >

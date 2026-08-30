@@ -51,14 +51,17 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen grid md:grid-cols-[55%_45%] bg-ink-950 grain">
       <div className="hidden md:flex flex-col justify-end relative p-12 bg-ink-950 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(184,255,102,.18),transparent_34%),radial-gradient(ellipse_at_80%_10%,rgba(122,146,255,.12),transparent_30%)]" />
         <OscilloscopeHero className="absolute inset-0 w-full h-full object-cover opacity-60" quiet />
         <p className="relative z-10 text-body-l text-text-secondary max-w-sm">
           Most failed payments aren&apos;t lost. They&apos;re recoverable.
         </p>
       </div>
-      <div className="flex items-center justify-center p-8 bg-ink-900 md:bg-ink-950">
+      <div className="flex items-center justify-center p-8 bg-ink-900/80 md:bg-ink-950">
         <Suspense fallback={<div className="text-text-secondary">Loading...</div>}>
-          <SignUpForm />
+          <div className="app-surface rounded-card p-6 sm:p-8">
+            <SignUpForm />
+          </div>
         </Suspense>
       </div>
     </div>

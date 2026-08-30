@@ -43,11 +43,14 @@ export function ReportsClient({ stats, reports }: ReportsClientProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 h-16 bg-ink-950 border-b border-border px-6 flex items-center">
-        <h1 className="font-display text-display-m text-text-primary">Executive Summary</h1>
+      <header className="app-header sticky top-0 z-20 min-h-16 px-5 py-4 sm:px-6 flex items-center">
+        <div>
+          <p className="text-body-s uppercase tracking-wide text-text-tertiary">Recovery board pack</p>
+          <h1 className="font-display text-display-m text-text-primary">Executive Summary</h1>
+        </div>
       </header>
 
-      <div className="p-6 max-w-container">
+      <div className="p-5 sm:p-6 max-w-container">
         <div className="grid grid-cols-12 gap-8">
           {/* Row 1: stat cards */}
           {statCards.map((card, i) => (

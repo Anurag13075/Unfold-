@@ -31,6 +31,7 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen grid md:grid-cols-[55%_45%] bg-ink-950 grain">
       <div className="hidden md:flex flex-col justify-end relative p-12 bg-ink-950 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(184,255,102,.18),transparent_34%),radial-gradient(ellipse_at_80%_10%,rgba(122,146,255,.12),transparent_30%)]" />
         <OscilloscopeHero className="absolute inset-0 w-full h-full object-cover opacity-60" quiet />
         <p className="relative z-10 text-body-l text-text-secondary max-w-sm">
           Connect once. Undrop handles the rest.
@@ -38,7 +39,7 @@ export default function OnboardingPage() {
       </div>
 
       <div className="flex items-center justify-center p-8">
-        <div className="w-full max-w-[400px]">
+        <div className="app-surface w-full max-w-[460px] rounded-card p-6 sm:p-8">
           <Wordmark className="h-6 w-auto text-text-primary mb-8" />
 
           {/* Progress */}
@@ -131,7 +132,7 @@ export default function OnboardingPage() {
                   as they happen.
                 </p>
               </div>
-              <div className="bg-surface-800 border border-border rounded-card p-4 aspect-video flex items-center justify-center">
+              <div className="app-surface rounded-card p-4 aspect-video flex items-center justify-center">
                 <div className="text-center">
                   <p className="font-display text-display-m text-text-primary">Pulse Ledger</p>
                   <p className="text-body-m text-text-tertiary mt-1">Live recovery feed</p>

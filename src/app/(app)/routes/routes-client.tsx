@@ -25,11 +25,14 @@ export function RoutesClient({ clusters }: RoutesClientProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 h-16 bg-ink-950 border-b border-border px-6 flex items-center">
-        <h1 className="font-display text-display-m text-text-primary">Route Intelligence</h1>
+      <header className="app-header sticky top-0 z-20 min-h-16 px-5 py-4 sm:px-6 flex items-center">
+        <div>
+          <p className="text-body-s uppercase tracking-wide text-text-tertiary">Smart router control plane</p>
+          <h1 className="font-display text-display-m text-text-primary">Route Intelligence</h1>
+        </div>
       </header>
 
-      <div className="p-6 max-w-container">
+      <div className="p-5 sm:p-6 max-w-container">
         <SmartRouterRuleEngine />
         <div className="flex flex-wrap gap-4 mb-6">
           <SegmentedControl

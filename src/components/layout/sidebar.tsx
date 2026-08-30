@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ChartBar,
+  CaretLeft,
   Gear,
   Pulse,
   SignOut,
@@ -36,11 +37,11 @@ export function Sidebar({ workspaceName = "My Workspace", userName, userImage }:
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-40 bg-ink-950 border-r border-border transition-all duration-200",
+          "hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-40 border-r border-border bg-ink-950/70 backdrop-blur-2xl transition-all duration-300",
           collapsed ? "w-[72px]" : "w-60"
         )}
       >
-        <div className="h-16 flex items-center px-4 border-b border-border">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           <Link href="/dashboard" className="text-text-primary">
             {collapsed ? (
               <Logomark className="w-8 h-8" />
@@ -48,6 +49,13 @@ export function Sidebar({ workspaceName = "My Workspace", userName, userImage }:
               <Wordmark className="h-6 w-auto" />
             )}
           </Link>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="grid h-8 w-8 place-items-center rounded-btn border border-border text-text-tertiary transition hover:border-border-strong hover:bg-white/[.06] hover:text-text-primary"
+            aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+          >
+            <CaretLeft size={15} className={cn("transition", collapsed && "rotate-180")} />
+          </button>
         </div>
 
         <nav className="flex-1 p-3 space-y-1">
@@ -61,12 +69,12 @@ export function Sidebar({ workspaceName = "My Workspace", userName, userImage }:
                 className={cn(
                   "relative flex items-center gap-3 h-10 px-3 rounded-btn text-body-m transition-colors duration-150",
                   active
-                    ? "bg-surface-700 text-text-primary"
-                    : "text-text-secondary hover:bg-surface-700 hover:text-text-primary"
+                    ? "bg-pulse-500 text-ink-950 shadow-[0_0_28px_rgba(184,255,102,.18)]"
+                    : "text-text-secondary hover:bg-white/[.06] hover:text-text-primary"
                 )}
               >
                 {active && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-pulse-500 rounded-r" />
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-ink-950/70 rounded-r" />
                 )}
                 <Icon size={20} weight="thin" />
                 {!collapsed && <span>{item.label}</span>}
@@ -81,8 +89,8 @@ export function Sidebar({ workspaceName = "My Workspace", userName, userImage }:
               {workspaceName}
             </p>
           )}
-          <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-btn bg-surface-700 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-card border border-border bg-white/[.035]">
+            <div className="w-8 h-8 rounded-btn bg-white/[.07] flex items-center justify-center overflow-hidden shrink-0">
               {userImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={userImage} alt="" className="w-full h-full object-cover" />
@@ -99,7 +107,7 @@ export function Sidebar({ workspaceName = "My Workspace", userName, userImage }:
             )}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="text-text-tertiary hover:text-text-secondary transition-colors"
+              className="text-text-tertiary hover:text-flatline-500 transition-colors"
               aria-label="Sign out"
             >
               <SignOut size={18} weight="thin" />
@@ -109,7 +117,7 @@ export function Sidebar({ workspaceName = "My Workspace", userName, userImage }:
       </aside>
 
       {/* Mobile bottom tab bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-ink-950 border-t border-border">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-ink-950/85 backdrop-blur-2xl">
         <div className="flex items-center justify-around h-14">
           {navItems.map((item) => {
             const active = pathname === item.href;

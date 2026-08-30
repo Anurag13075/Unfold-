@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Cpu, Lightning, ShieldCheck, ArrowsMerge, CheckCircle, DownloadSimple, Copy, Code, Spinner } from "@phosphor-icons/react";
 
 interface SmartRoutingRule {
@@ -16,7 +17,7 @@ export function SmartRouterRuleEngine() {
   const [rules, setRules] = useState<SmartRoutingRule[]>([
     {
       id: "rule_1",
-      corridor: "HDFC · UPI Intent",
+      corridor: "HDFC / UPI Intent",
       triggerCondition: "Failure rate > 20% over 10 min window",
       fallbackAction: "Reroute to ICICI Secondary Gateway",
       active: true,
@@ -24,7 +25,7 @@ export function SmartRouterRuleEngine() {
     },
     {
       id: "rule_2",
-      corridor: "ICICI · Card 3DS",
+      corridor: "ICICI / Card 3DS",
       triggerCondition: "Authentication Timeout > 15%",
       fallbackAction: "Enable Step-Up Authentication Fallback",
       active: true,
@@ -32,7 +33,7 @@ export function SmartRouterRuleEngine() {
     },
     {
       id: "rule_3",
-      corridor: "SBI · Netbanking",
+      corridor: "SBI / Netbanking",
       triggerCondition: "Technical Decline > 10%",
       fallbackAction: "Auto-retry with 60s backoff",
       active: false,
@@ -87,7 +88,8 @@ export function SmartRouterRuleEngine() {
   };
 
   return (
-    <div className="bg-surface-800 border border-border rounded-card p-5 mb-8 shadow-card relative">
+    <div className="app-surface rounded-card p-5 mb-8 relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-pulse-500/60 to-transparent" />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-md bg-pulse-500/10 border border-pulse-500/30 flex items-center justify-center text-pulse-500">
@@ -131,11 +133,14 @@ export function SmartRouterRuleEngine() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {rules.map((rule) => (
-          <div
+          <motion.div
             key={rule.id}
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
             className={`p-4 rounded-card border transition-all ${
               rule.active
-                ? "bg-surface-700/60 border-pulse-500/30 shadow-sm"
+                ? "bg-pulse-wash border-pulse-500/30 shadow-sm"
                 : "bg-ink-950/40 border-border opacity-70"
             }`}
           >
@@ -172,7 +177,7 @@ export function SmartRouterRuleEngine() {
               </span>
               <span className="font-mono text-text-primary">{rule.bypassedCount} txns bypassed</span>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 

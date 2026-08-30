@@ -18,7 +18,7 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       className={cn(
-        "inline-flex p-1 bg-surface-600 rounded-btn border border-border",
+        "inline-flex p-1 bg-white/[.045] rounded-btn border border-border shadow-[inset_0_1px_0_rgba(255,255,255,.04)]",
         className
       )}
     >
@@ -29,7 +29,7 @@ export function SegmentedControl<T extends string>({
           className={cn(
             "px-3 py-1.5 text-body-s font-medium rounded-[6px] transition-colors duration-150",
             value === opt.value
-              ? "bg-surface-700 text-text-primary"
+              ? "bg-pulse-500 text-ink-950"
               : "text-text-secondary hover:text-text-primary"
           )}
         >

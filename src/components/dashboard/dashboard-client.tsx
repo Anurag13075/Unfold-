@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Warning, ArrowRight } from "@phosphor-icons/react";
+import { Warning, ArrowRight, Sparkle } from "@phosphor-icons/react";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { StatusChip } from "@/components/ui/status-chip";
 import { Waveform } from "@/components/waveform/waveform";
@@ -63,8 +63,11 @@ export function DashboardClient({
   return (
     <>
       {/* Sticky header */}
-      <header className="sticky top-0 z-20 h-16 bg-ink-950 border-b border-border px-6 flex items-center justify-between">
-        <h1 className="font-display text-display-m text-text-primary">Dashboard</h1>
+      <header className="app-header sticky top-0 z-20 min-h-16 px-5 py-4 sm:px-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-body-s uppercase tracking-wide text-text-tertiary">Live recovery cockpit</p>
+          <h1 className="font-display text-display-m text-text-primary">Dashboard</h1>
+        </div>
         <div className="flex items-center gap-3">
           <span className="font-mono text-mono-l text-ember-500 tabular-nums">
             {formatCurrency(stats.tickerAmount)}
@@ -76,10 +79,10 @@ export function DashboardClient({
         </div>
       </header>
 
-      <div className="p-6">
+      <div className="p-5 sm:p-6">
         {/* Onboarding Banner Nudge */}
         {!hasWebhookSecret && (
-          <div className="mb-6 p-4 bg-surface-800 border border-amber-500/30 rounded-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="mb-6 app-surface rounded-card p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0 mt-0.5 sm:mt-0">
                 <Warning className="w-5 h-5" />
@@ -120,9 +123,12 @@ export function DashboardClient({
               }}
             />
 
-            <div className="bg-surface-800 border border-border rounded-card">
+            <div className="app-surface rounded-card overflow-hidden">
               <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-                <h2 className="font-display text-display-m text-text-primary">Pulse Ledger</h2>
+                <div>
+                  <p className="text-body-s uppercase tracking-wide text-text-tertiary">Revenue stream</p>
+                  <h2 className="font-display text-display-m text-text-primary">Pulse Ledger</h2>
+                </div>
                 <SegmentedControl options={filterOptions} value={filter} onChange={setFilter} />
               </div>
 
@@ -146,7 +152,7 @@ export function DashboardClient({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.22, delay: i * 0.03, ease: [0.16, 1, 0.3, 1] }}
                       onClick={() => setSelectedTxn(txn)}
-                      className="w-full flex items-center gap-4 px-5 h-14 hover:bg-surface-700 transition-colors duration-150 text-left"
+                      className="w-full flex items-center gap-4 px-5 h-16 hover:bg-white/[.055] transition-colors duration-150 text-left"
                     >
                       <Waveform
                         status={txn.status}
@@ -179,10 +185,19 @@ export function DashboardClient({
               <h2 className="font-display text-display-m text-text-primary">Route Intelligence</h2>
               <Link
                 href="/routes"
-                className="text-body-m text-ember-500 hover:text-ember-700 transition-colors"
+                className="inline-flex items-center gap-1 text-body-m text-pulse-500 hover:text-text-primary transition-colors"
               >
-                View all →
+                View all <ArrowRight size={14} />
               </Link>
+            </div>
+            <div className="app-surface rounded-card p-4">
+              <div className="flex items-center gap-2 text-pulse-500">
+                <Sparkle size={16} weight="fill" />
+                <p className="text-body-s uppercase tracking-wide">Autopilot readout</p>
+              </div>
+              <p className="mt-3 text-body-m text-text-secondary">
+                Undrop is monitoring issuer drift and ranking recoverable failures before customer outreach.
+              </p>
             </div>
             {clusters.slice(0, 3).map((cluster) => (
               <RouteClusterCard key={cluster.id} cluster={cluster} compact />

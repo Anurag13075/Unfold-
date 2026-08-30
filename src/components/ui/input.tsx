@@ -28,7 +28,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             type={inputType}
             className={cn(
-              "w-full h-10 px-3 bg-surface-600 border border-border rounded-btn text-text-primary placeholder:text-text-tertiary transition-colors duration-150 focus:outline-none focus:border-pulse-500",
+              "w-full h-10 px-3 bg-white/[.045] border border-border rounded-btn text-text-primary placeholder:text-text-tertiary shadow-[inset_0_1px_0_rgba(255,255,255,.04)] transition-all duration-150 focus:outline-none focus:border-pulse-500 focus:bg-white/[.07]",
               mono && "font-mono text-mono-s tabular-nums",
               secret && "pr-10",
               className
