@@ -6,28 +6,36 @@ interface GrokMessage {
 }
 
 async function callGrok(messages: GrokMessage[]): Promise<string | null> {
-  const apiKey = process.env.GROK_API_KEY;
+  // NOTE: despite the env var name (kept for backward compatibility with
+  // existing deployments), this actually calls Groq (console.groq.com,
+  // the fast-inference company) — NOT xAI's Grok model. An xAI/Grok API
+  // key will NOT work here; a Groq key from console.groq.com is required.
+  const apiKey = process.env.GROQ_API_KEY || process.env.GROK_API_KEY;
   if (!apiKey) return null;
 
   try {
-    const res = await fetch("https://api.x.ai/v1/chat/completions", {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "grok-2-latest",
+        model: "llama-3.3-70b-versatile",
         messages,
         temperature: 0.3,
         response_format: { type: "json_object" },
       }),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("Groq API error:", res.status, await res.text().catch(() => ""));
+      return null;
+    }
     const data = await res.json();
     return data.choices?.[0]?.message?.content ?? null;
-  } catch {
+  } catch (err) {
+    console.error("Groq API call failed:", err);
     return null;
   }
 }
@@ -120,7 +128,7 @@ export async function analyzeTransaction(params: {
   method: string;
   issuer: string;
 }): Promise<AgentDecisionObject> {
-  const systemPrompt = `You are Undrop's recovery agent for Razorpay merchants. Analyze failed payments and return a JSON object with: decision (retry_now|retry_delayed|suggest_alt_method|escalate_human), delay_seconds (optional number), alt_method (optional string), reasoning (1-2 plain English sentences citing the signal), drafted_message ({channel: whatsapp|sms|email, body: string}), confidence (0-1).`;
+  const systemPrompt = `You are Undrop's recovery agent for Razorpay merchants. Analyze failed payments and return a JSON object with: decision (retry_now|retry_delayed|suggest_alt_method|escalate_human), delay_seconds (optional number), alt_method (optional string), reasoning (1-2 plain English sentences citing the signal), drafted_message ({channel: whatsapp|sms|email, body: string}), confidence (0-1). For drafted_message.channel: prefer whatsapp or sms for quick low-friction nudges on small/medium amounts, but use email for higher-value transactions or when a more detailed explanation is warranted — don't default to the same channel every time, vary it based on the actual signal.`;
 
   const userPrompt = `Transaction ${params.transactionId}: ₹${params.amount} via ${params.method} on ${params.issuer}. Decline: ${params.declineCode} — ${params.declineReason}.`;
 
