@@ -37,9 +37,9 @@ CREATE TABLE IF NOT EXISTS transactions (
   recovered_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_transactions_user_id ON transactions(user_id);
-CREATE INDEX idx_transactions_status ON transactions(status);
-CREATE INDEX idx_transactions_created_at ON transactions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
+CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at DESC);
 
 CREATE TABLE IF NOT EXISTS decline_events (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -94,7 +94,14 @@ ALTER TABLE agent_actions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE route_clusters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recovery_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can read own data" ON users;
 CREATE POLICY "Users can read own data" ON users FOR SELECT USING (auth.uid()::text = id);
+
+DROP POLICY IF EXISTS "Users can update own data" ON users;
 CREATE POLICY "Users can update own data" ON users FOR UPDATE USING (auth.uid()::text = id);
+
+DROP POLICY IF EXISTS "Users can read own transactions" ON transactions;
 CREATE POLICY "Users can read own transactions" ON transactions FOR SELECT USING (auth.uid()::text = user_id);
+
+DROP POLICY IF EXISTS "Users can read own clusters" ON route_clusters;
 CREATE POLICY "Users can read own clusters" ON route_clusters FOR SELECT USING (auth.uid()::text = user_id);
