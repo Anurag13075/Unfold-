@@ -10,9 +10,11 @@ CREATE TABLE IF NOT EXISTS users (
   workspace_name TEXT DEFAULT 'My Workspace',
   razorpay_key_id TEXT,
   razorpay_key_secret_enc TEXT,
+  razorpay_webhook_secret_enc TEXT,
   whatsapp_key_enc TEXT,
   sms_key_enc TEXT,
   email_key_enc TEXT,
+  telegram_key_enc TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
