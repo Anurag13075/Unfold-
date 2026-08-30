@@ -3,7 +3,7 @@
 ![Undrop](./undrop.png.png) 
 **Agentic revenue recovery for Razorpay merchants.**
 
-Undrop helps merchants recover failed payments and detect route-level payment issues before they keep leaking GMV. It combines a transaction recovery agent, customer outreach workflows, live failure clustering, and Smart Router-ready recommendations in one operator console.
+Undrop helps merchants recover failed payments and detect route-level payment issues before they keep leaking GMV. It combines a transaction recovery agent, Ask Undrop copilot actions, customer outreach workflows, live failure clustering, and Smart Router-ready recommendations in one operator console.
 
 Built for the **Razorpay AI Buildathon 2026** under **Track 03: AI Revenue Recovery**.
 
@@ -26,9 +26,11 @@ Undrop closes the revenue recovery loop:
 2. **Diagnose the failure** - The recovery agent analyzes amount, issuer, method, decline code, and reason.
 3. **Choose a bounded action** - Decisions include `retry_now`, `retry_delayed`, `suggest_alt_method`, and `escalate_human`.
 4. **Draft customer outreach** - The system generates channel-aware recovery messages.
-5. **Track recovery outcomes** - The dashboard reports recovered GMV, recovery rate, outreach performance, and operational savings.
-6. **Detect route degradation** - Failure clusters are grouped by issuer, method, and error code.
-7. **Export Smart Router rules** - Active route clusters become Razorpay Smart Router-style JSON rules.
+5. **Confirm copilot actions** - Ask Undrop can prepare real actions from natural language, but never executes them until the merchant confirms.
+6. **Resend or update safely** - Confirmed tool calls can resend recovery outreach or mark transactions recovered/escalated using existing server-side functions.
+7. **Track recovery outcomes** - The dashboard reports recovered GMV, recovery rate, outreach performance, and operational savings.
+8. **Detect route degradation** - Failure clusters are grouped by issuer, method, and error code.
+9. **Export Smart Router rules** - Active route clusters become Razorpay Smart Router-style JSON rules when router dependencies are available.
 
 ## Buildathon Track Fit
 
@@ -40,8 +42,9 @@ Undrop directly targets that problem. It is not a generic chatbot or blind retry
 
 | Surface | Purpose |
 | --- | --- |
-| Landing page | Explains the recovery and route-intelligence story |
+| Landing page | Premium animated product story for recovery, Ask Undrop, route intelligence, and trust guardrails |
 | Dashboard | Shows failed payments, agent decisions, recovered GMV, and Pulse Ledger metrics |
+| Ask Undrop | Grounded copilot that can answer questions and prepare confirmed recovery actions |
 | Transaction detail | Displays decline reason, AI decision, recovery message, and trace |
 | Route Intelligence | Detects issuer/method/error-code clusters above baseline |
 | Smart Router export | Generates route-fix JSON from active clusters |
@@ -68,11 +71,30 @@ flowchart TD
   ROUTES --> DASH
 ```
 
+## Ask Undrop Tool Calling
+
+Ask Undrop is more than a dashboard Q&A assistant. It can translate natural language into bounded operational actions:
+
+- `resend_recovery_message` - resend a payment recovery message through email, SMS, WhatsApp, or Telegram.
+- `mark_transaction_status` - manually mark a transaction as `recovered` or `escalated`.
+- `push_to_smart_router` - planned for workspaces where the route simulator and `route_decisions` table exist.
+
+The safety flow is mandatory:
+
+1. The merchant asks for an action.
+2. The model or fallback parser identifies a tool call.
+3. Undrop looks up real transaction data and explains the consequence.
+4. The UI shows a confirmation bubble with Confirm and Cancel buttons.
+5. Only the next clear affirmative reply executes the tool.
+6. Execution uses existing library functions and writes an audit entry.
+
+Guardrails include one pending action at a time, refusal for unknown transaction IDs, stored customer recipients only, and no same-turn execution.
+
 ## AI Design
 
 The AI agent is used for structured decision support, not unbounded execution. For each failed transaction, it returns a decline explanation, recovery decision, optional retry delay, optional alternate method, confidence score, reasoning, and drafted outreach message.
 
-When AI provider keys are unavailable, Undrop falls back to a deterministic rule-based decision engine so the demo remains reproducible.
+When AI provider keys are unavailable, Undrop falls back to deterministic rule-based decisions and keyword-based copilot intent parsing so the demo remains reproducible.
 
 ## Real vs Simulated
 
@@ -82,7 +104,8 @@ When AI provider keys are unavailable, Undrop falls back to a deterministic rule
 | Razorpay merchant settings | Real: stores encrypted test-mode credentials |
 | Google OAuth | Real when environment variables are configured |
 | Supabase persistence | Real schema with transaction, action, message, and route tables |
-| AI recovery decisions | Real with Groq or Cerebras keys, deterministic fallback otherwise |
+| AI recovery decisions | Real with GroqCloud or Cerebras keys, deterministic fallback otherwise |
+| Ask Undrop tool calling | Real confirmed actions for resend/status tools, with parser fallback |
 | Outreach dispatch | Real provider integrations where keys are configured, graceful fallback otherwise |
 | Synthetic simulator | Simulated Buildathon data for repeatable demos |
 | Dashboard seed data | Simulated merchant, issuer, method, and decline distribution |
@@ -94,7 +117,7 @@ When AI provider keys are unavailable, Undrop falls back to a deterministic rule
 - **UI:** Tailwind CSS, Framer Motion, Recharts
 - **Auth:** Auth.js v5 with Google OAuth and demo account fallback
 - **Database:** Supabase Postgres with schema in `supabase/schema.sql`
-- **AI:** Groq primary, Cerebras fallback, deterministic rules as backup
+- **AI:** GroqCloud primary, Cerebras fallback, deterministic rules as backup
 - **Payments:** Razorpay test-mode webhook ingestion
 - **Outreach:** Email, SMS, WhatsApp, Telegram, and webhook dispatch paths
 
@@ -160,15 +183,16 @@ Use this flow for a 5-minute Buildathon demo:
 1. **Landing page** - show the premise: failed payments are recoverable revenue, not just errors.
 2. **Dashboard** - show recovered GMV, recovery rate, recent failed payments, and the Pulse Ledger.
 3. **Simulate failures** - run the simulator with `injectCluster: true`.
-4. **Transaction detail** - show the AI decision, reasoning, confidence, and recovery message.
-5. **Recovery link** - open the customer-facing recovery URL.
-6. **Route Intelligence** - show the HDFC UPI Intent degradation cluster and recommended route fix.
-7. **Smart Router export** - export the generated route rule JSON.
-8. **Reports** - close with recovered GMV, channel performance, and route fixes.
+4. **Ask Undrop** - ask it to resend recovery for a real transaction ID, show the confirmation bubble, then confirm.
+5. **Transaction detail** - show the AI decision, reasoning, confidence, recovery message, and copilot audit trace.
+6. **Recovery link** - open the customer-facing recovery URL.
+7. **Route Intelligence** - show the HDFC UPI Intent degradation cluster and recommended route fix.
+8. **Smart Router export** - export the generated route rule JSON when route dependencies are enabled.
+9. **Reports** - close with recovered GMV, channel performance, and route fixes.
 
 ## Pitch
 
-> Undrop helps Razorpay merchants recover revenue at two levels: it acts on individual failed payments and learns from failure patterns to recommend route fixes. The result is not just smarter retries, but a closed-loop revenue recovery system with auditability, outreach, and route intelligence built in.
+> Undrop helps Razorpay merchants recover revenue at two levels: it acts on individual failed payments with confirmed copilot actions, and it learns from failure patterns to recommend route fixes. The result is not just smarter retries, but a closed-loop revenue recovery system with auditability, outreach, and route intelligence built in.
 
 ## Repository Structure
 
