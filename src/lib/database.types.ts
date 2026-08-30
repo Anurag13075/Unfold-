@@ -23,6 +23,7 @@ export interface Database {
           whatsapp_key_enc: string | null;
           sms_key_enc: string | null;
           email_key_enc: string | null;
+          telegram_key_enc: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -39,6 +40,7 @@ export interface Database {
           whatsapp_key_enc?: string | null;
           sms_key_enc?: string | null;
           email_key_enc?: string | null;
+          telegram_key_enc?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -55,6 +57,7 @@ export interface Database {
           whatsapp_key_enc?: string | null;
           sms_key_enc?: string | null;
           email_key_enc?: string | null;
+          telegram_key_enc?: string | null;
           created_at?: string;
           updated_at?: string;
         };
