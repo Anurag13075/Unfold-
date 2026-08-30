@@ -15,6 +15,8 @@ import {
   ShieldCheck,
   Sparkle,
   Spinner,
+  ArrowSquareOut,
+  Info,
 } from "@phosphor-icons/react";
 
 declare global {
@@ -72,14 +74,15 @@ export default function PublicRecoveryPage({ params }: { params: { id: string } 
 
     const keyId = data.razorpayKeyId;
 
-    if (keyId && keyId.startsWith("rzp_live") && typeof window !== "undefined" && window.Razorpay) {
+    if (keyId && (keyId.startsWith("rzp_live") || keyId.startsWith("rzp_test")) && typeof window !== "undefined" && window.Razorpay) {
       try {
-        const options = {
+        const options: any = {
           key: keyId,
           amount: Math.round(data.transaction.amount * 100),
           currency: data.transaction.currency || "INR",
           name: data.transaction.merchant_name || "Merchant Payment",
           description: `Recovery for #${data.transaction.id}`,
+          order_id: data.razorpayOrderId || undefined,
           handler: async function (response: any) {
             await completeRecovery(response.razorpay_payment_id || `pay_${Date.now()}`);
           },
@@ -104,7 +107,7 @@ export default function PublicRecoveryPage({ params }: { params: { id: string } 
       }
     }
 
-    // Direct / Test mode completion
+    // Direct / Test / Simulated mode completion fallback
     setTimeout(async () => {
       await completeRecovery(`pay_rec_${Math.random().toString(36).substring(2, 9)}`);
     }, 800);
@@ -252,6 +255,19 @@ export default function PublicRecoveryPage({ params }: { params: { id: string } 
                 </p>
               </div>
 
+              {/* Mode Banner Indicator */}
+              {data.isLiveOrTestKey ? (
+                <div className="flex items-center gap-2 bg-[var(--pulse-wash)] border border-[var(--pulse-500)]/30 rounded-xl px-3.5 py-2.5 text-xs text-[var(--pulse-500)] font-mono">
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
+                  <span>Real Razorpay Gateway Active ({data.razorpayKeyId?.startsWith("rzp_live") ? "Live Mode" : "Test Mode"})</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 bg-[var(--surface-700)] border border-[var(--border-default)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-secondary)] font-mono">
+                  <Info className="w-4 h-4 shrink-0 text-[var(--ember-500)]" />
+                  <span>Demo / Simulated Recovery Mode (No Razorpay keys connected)</span>
+                </div>
+              )}
+
               {/* AI Route Intelligence Tip */}
               <div className="bg-gradient-to-r from-[var(--ember-wash)] to-transparent border border-[var(--ember-500)]/30 rounded-xl p-4 space-y-2">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[var(--ember-500)] uppercase font-mono tracking-wider">
@@ -335,26 +351,40 @@ export default function PublicRecoveryPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
-              {/* Submit CTA */}
-              <button
-                type="button"
-                onClick={handlePay}
-                disabled={isProcessing}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-heading font-semibold text-sm bg-[var(--ember-500)] hover:bg-[var(--ember-700)] text-[var(--ink-950)] transition shadow-lg shadow-[var(--ember-500)]/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isProcessing ? (
-                  <>
-                    <Spinner className="w-5 h-5 animate-spin" />
-                    Processing Payment...
-                  </>
-                ) : (
-                  <>
-                    <Lightning className="w-5 h-5 weight-fill" />
-                    Pay ₹{transaction.amount.toLocaleString("en-IN")} Now
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </>
+              {/* Submit CTA Buttons (Hybrid Modal + External Redirect Link option) */}
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={handlePay}
+                  disabled={isProcessing}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-heading font-semibold text-sm bg-[var(--ember-500)] hover:bg-[var(--ember-700)] text-[var(--ink-950)] transition shadow-lg shadow-[var(--ember-500)]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Spinner className="w-5 h-5 animate-spin" />
+                      Processing Payment...
+                    </>
+                  ) : (
+                    <>
+                      <Lightning className="w-5 h-5 weight-fill" />
+                      Pay ₹{transaction.amount.toLocaleString("en-IN")} via Checkout
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </>
+                  )}
+                </button>
+
+                {data.paymentLinkUrl && (
+                  <a
+                    href={data.paymentLinkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-heading font-medium text-xs bg-[var(--surface-700)] hover:bg-[var(--surface-600)] text-[var(--text-primary)] border border-[var(--border-default)] transition"
+                  >
+                    <ArrowSquareOut className="w-4 h-4 text-[var(--text-secondary)]" />
+                    Or Pay via Direct Razorpay Hosted Link
+                  </a>
                 )}
-              </button>
+              </div>
             </>
           )}
         </div>

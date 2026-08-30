@@ -25,6 +25,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
   const supabase = createServiceClient();
   let razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || null;
+  let razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || null;
+  let paymentLinkUrl: string | null = null;
+  let razorpayOrderId: string | null = null;
 
   if (supabase) {
     const { data: txnData } = await supabase
@@ -36,13 +39,94 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     if (txnData?.user_id) {
       const { data: userData } = await supabase
         .from("users")
-        .select("razorpay_key_id")
+        .select("razorpay_key_id, razorpay_key_secret_enc")
         .eq("id", txnData.user_id)
         .maybeSingle();
 
       if (userData?.razorpay_key_id) {
         razorpayKeyId = userData.razorpay_key_id;
       }
+      if (userData?.razorpay_key_secret_enc) {
+        try {
+          const { decrypt } = await import("@/lib/encryption");
+          razorpayKeySecret = decrypt(userData.razorpay_key_secret_enc);
+        } catch (e) {
+          console.error("Failed to decrypt user razorpay key secret:", e);
+        }
+      }
+    }
+  }
+
+  // If we have Razorpay API keys, try creating an official Razorpay Order or Payment Link
+  if (razorpayKeyId && razorpayKeySecret) {
+    try {
+      const authHeader = "Basic " + Buffer.from(`${razorpayKeyId}:${razorpayKeySecret}`).toString("base64");
+
+      // Create Razorpay Order
+      const orderRes = await fetch("https://api.razorpay.com/v1/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+        body: JSON.stringify({
+          amount: Math.round(transaction.amount * 100),
+          currency: transaction.currency || "INR",
+          receipt: `rcpt_${transaction.id}`,
+          notes: {
+            recovery_transaction_id: transaction.id,
+            merchant: transaction.merchant_name,
+          },
+        }),
+      });
+
+      if (orderRes.ok) {
+        const orderData = await orderRes.json();
+        razorpayOrderId = orderData.id;
+      } else {
+        const errText = await orderRes.text();
+        console.warn("Razorpay Order creation API error response:", errText);
+      }
+
+      // Create Razorpay Payment Link (for external payment link redirect option)
+      const linkRes = await fetch("https://api.razorpay.com/v1/payment_links", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+        body: JSON.stringify({
+          amount: Math.round(transaction.amount * 100),
+          currency: transaction.currency || "INR",
+          accept_partial: false,
+          description: `Recovery payment for ${transaction.merchant_name} (Ref: ${transaction.id})`,
+          customer: {
+            name: "Customer",
+            email: "customer@example.com",
+            contact: "+919876543210",
+          },
+          notify: {
+            sms: false,
+            email: false,
+          },
+          reminder_enable: false,
+          notes: {
+            recovery_transaction_id: transaction.id,
+          },
+          callback_url: `${req.headers.get("origin") || ""}/recover/${transaction.id}`,
+          callback_method: "get",
+        }),
+      });
+
+      if (linkRes.ok) {
+        const linkData = await linkRes.json();
+        paymentLinkUrl = linkData.short_url || linkData.url || null;
+      } else {
+        const errText = await linkRes.text();
+        console.warn("Razorpay Payment Link creation API error response:", errText);
+      }
+    } catch (apiErr) {
+      console.error("Failed creating Razorpay order/link:", apiErr);
     }
   }
 
@@ -56,6 +140,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       reasoning: latestAction?.reasoning || "AI Route Intelligence: HDFC UPI has transient delays (34% above baseline). Retrying via Credit Card or PhonePe yields 99.4% instant success.",
     },
     razorpayKeyId,
+    razorpayOrderId,
+    paymentLinkUrl,
+    isLiveOrTestKey: Boolean(razorpayKeyId && (razorpayKeyId.startsWith("rzp_live") || razorpayKeyId.startsWith("rzp_test"))),
   });
 }
 
