@@ -17,16 +17,6 @@ export function LandingPageContent() {
   return (
     <LandingThemeProvider>
       <div className="relative min-h-screen bg-[var(--ink-950)] text-[var(--text-primary)] overflow-x-hidden">
-        {/* Full landing page background image container */}
-        <div
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-90 transition-opacity duration-500"
-          style={{
-            backgroundImage: "url('/landing-bg.png')",
-          }}
-        />
-        {/* Subtle overlay to enhance contrast and typography readability */}
-        <div className="fixed inset-0 z-0 bg-[var(--ink-950)]/40 pointer-events-none backdrop-brightness-95" />
-
         <div className="relative z-10 flex flex-col min-h-screen">
           <LandingNav />
           <main className="flex-1 relative">
