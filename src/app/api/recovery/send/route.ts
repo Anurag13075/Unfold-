@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       customKeys = {},
     } = body;
 
-    let transaction = await getTransaction(transactionId);
+    let transaction = await getTransaction(transactionId, session?.user?.id);
 
     // Fallback if transaction is test/simulated or doesn't exist
     if (!transaction) {
