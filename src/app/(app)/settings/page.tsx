@@ -16,6 +16,7 @@ export default async function SettingsPage() {
       hasWhatsapp={!!user?.whatsapp_key_enc}
       hasSms={!!user?.sms_key_enc}
       hasEmail={!!user?.email_key_enc}
+      hasTelegram={!!user?.telegram_key_enc}
     />
   );
 }
