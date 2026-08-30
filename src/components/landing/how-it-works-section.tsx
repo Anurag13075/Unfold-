@@ -89,7 +89,7 @@ export function HowItWorksSection() {
   }
 
   return (
-    <section id="how-it-works" ref={sectionRef} className="relative border-t border-border bg-ink-900" style={{ height: "300vh" }}>
+    <section id="how-it-works" ref={sectionRef} className="relative border-t border-border bg-ink-900" style={{ height: "210vh" }}>
       <div className="sticky top-0 h-screen flex items-center overflow-hidden">
         <div className="max-w-container mx-auto px-4 md:px-8 w-full">
           <p className="text-body-s uppercase tracking-wide text-text-secondary mb-3">How it works</p>
