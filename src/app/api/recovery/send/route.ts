@@ -85,12 +85,18 @@ export async function POST(req: Request) {
     // Save recovery message trace in Supabase if database present
     const supabase = createServiceClient();
     if (supabase && transaction.id) {
-      await supabase.from("recovery_messages").insert({
-        transaction_id: transaction.id,
-        channel: channel === "whatsapp" ? "whatsapp" : channel === "sms" ? "sms" : "email",
-        body: `[Outreach Dispatched via ${result?.provider || channel}] Recovery Link: ${recoveryUrl}`,
-        created_at: new Date().toISOString(),
-      }).catch(() => {});
+      try {
+        await supabase.from("recovery_messages").insert({
+          transaction_id: transaction.id,
+          channel: channel === "whatsapp" ? "whatsapp" : channel === "sms" ? "sms" : "email",
+          body: `[Outreach Dispatched via ${result?.provider || channel}] Recovery Link: ${recoveryUrl}`,
+          created_at: new Date().toISOString(),
+        });
+      } catch (traceErr) {
+        // Logging the outreach trace is best-effort — a failure here
+        // must never fail the actual dispatch response to the user.
+        console.error("Failed to save recovery_messages trace:", traceErr);
+      }
     }
 
     return NextResponse.json({
