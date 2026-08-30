@@ -27,7 +27,7 @@ export async function callGrok(
         model: "llama-3.3-70b-versatile",
         messages,
         temperature: 0.3,
-        response_format: { type: responseFormat },
+        ...(responseFormat === "json_object" ? { response_format: { type: "json_object" } } : {}),
       }),
     });
 
@@ -61,7 +61,7 @@ export async function callCerebras(
         model: "llama-3.3-70b",
         messages,
         temperature: 0.3,
-        response_format: { type: responseFormat },
+        ...(responseFormat === "json_object" ? { response_format: { type: "json_object" } } : {}),
       }),
     });
 

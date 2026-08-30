@@ -91,7 +91,7 @@ export function Waveform({
         ctx.fillRect(lastX - 12, lastY - 12, 24, 24);
       }
     },
-    [width, height, data, status, generateDefault, colors, animate]
+    [width, height, data, status, generateDefault, animate]
   );
 
   useEffect(() => {
