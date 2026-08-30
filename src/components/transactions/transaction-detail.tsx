@@ -3,8 +3,9 @@
 import { formatCurrency, timeAgo } from "@/lib/utils";
 import { StatusChip } from "@/components/ui/status-chip";
 import { Waveform } from "@/components/waveform/waveform";
+import { assessRecoveryPolicy } from "@/lib/recovery-intelligence";
 import Link from "next/link";
-import { ArrowLeft, ArrowSquareOut, PaperPlaneTilt, CheckCircle, Spinner } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowSquareOut, PaperPlaneTilt, CheckCircle, Spinner, ShieldCheck, WarningCircle, XCircle } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type { AgentAction, RecoveryMessage, Transaction } from "@/types";
 
@@ -46,6 +47,8 @@ export function TransactionDetail({ transactionId, compact, initialData }: Trans
   }
 
   const { transaction, actions, message } = data;
+  const latestAction = actions[actions.length - 1] ?? null;
+  const policy = assessRecoveryPolicy(transaction, latestAction);
 
   return (
     <div className="space-y-6">
@@ -117,6 +120,70 @@ export function TransactionDetail({ transactionId, compact, initialData }: Trans
           </div>
         </div>
       )}
+
+      <div>
+        <p className="text-body-s uppercase tracking-wide text-text-secondary mb-3">
+          Policy Guardrails
+        </p>
+        <div className="rounded-card border border-border bg-surface-900 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className={policy.verdict === "approved" ? "text-pulse-500" : policy.verdict === "human_review" ? "text-ember-500" : "text-flatline-500"}>
+                {policy.verdict === "approved" ? (
+                  <ShieldCheck size={24} weight="fill" />
+                ) : policy.verdict === "human_review" ? (
+                  <WarningCircle size={24} weight="fill" />
+                ) : (
+                  <XCircle size={24} weight="fill" />
+                )}
+              </div>
+              <div>
+                <p className="font-display text-display-m text-text-primary">
+                  {policy.verdict === "approved"
+                    ? "Approved for bounded recovery"
+                    : policy.verdict === "human_review"
+                      ? "Human review required"
+                      : "Automation blocked"}
+                </p>
+                <p className="text-body-m text-text-secondary">
+                  AI recommendation: {latestAction ? decisionLabels[latestAction.decision] : "No agent action"} · Final action: {policy.finalAction}
+                </p>
+              </div>
+            </div>
+            <span className="self-start sm:self-auto rounded-chip bg-ink-950 px-2 py-1 font-mono text-mono-s text-text-tertiary">
+              Risk: {policy.riskLevel}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            {policy.checks.map((check) => (
+              <div key={check.label} className="flex items-start gap-3">
+                <span
+                  className={
+                    check.status === "passed"
+                      ? "mt-0.5 text-pulse-500"
+                      : check.status === "review"
+                        ? "mt-0.5 text-ember-500"
+                        : "mt-0.5 text-flatline-500"
+                  }
+                >
+                  {check.status === "passed" ? (
+                    <CheckCircle size={16} weight="fill" />
+                  ) : check.status === "review" ? (
+                    <WarningCircle size={16} weight="fill" />
+                  ) : (
+                    <XCircle size={16} weight="fill" />
+                  )}
+                </span>
+                <div>
+                  <p className="text-body-m text-text-primary">{check.label}</p>
+                  <p className="text-body-m text-text-secondary">{check.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {message && (
         <div>

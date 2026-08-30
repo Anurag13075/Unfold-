@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { getDashboardStats, getReportsData } from "@/lib/data";
+import { getDashboardStats, getReportsData, getTransactions } from "@/lib/data";
 import { ReportsClient } from "./reports-client";
 
 export default async function ReportsPage() {
@@ -8,8 +8,9 @@ export default async function ReportsPage() {
 
   const stats = await getDashboardStats(userId);
   const reports = await getReportsData(userId);
+  const transactions = await getTransactions(userId);
 
   return (
-    <ReportsClient stats={stats} reports={reports} />
+    <ReportsClient stats={stats} reports={reports} transactions={transactions} />
   );
 }

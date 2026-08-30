@@ -1,9 +1,11 @@
 import { auth } from "@/lib/auth";
-import { getRouteClusters } from "@/lib/data";
+import { getRouteClusters, getTransactions } from "@/lib/data";
 import { RoutesClient } from "./routes-client";
 
 export default async function RoutesPage() {
   const session = await auth();
-  const clusters = await getRouteClusters(session!.user!.id);
-  return <RoutesClient clusters={clusters} />;
+  const userId = session!.user!.id;
+  const clusters = await getRouteClusters(userId);
+  const transactions = await getTransactions(userId);
+  return <RoutesClient clusters={clusters} transactions={transactions} />;
 }
