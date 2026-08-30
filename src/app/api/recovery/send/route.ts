@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getTransaction, getRecoveryMessage } from "@/lib/data";
-import { sendEmailOutreach, sendSmsOutreach, sendTelegramOutreach, sendWebhookOutreach } from "@/lib/outreach";
+import { sendEmailOutreach, sendSmsOutreach, sendWhatsappOutreach, sendTelegramOutreach, sendWebhookOutreach } from "@/lib/outreach";
 import { createServiceClient } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         recoveryUrl,
         customApiKey: customKeys.resendApiKey,
       });
-    } else if (channel === "sms" || channel === "whatsapp") {
+    } else if (channel === "sms") {
       const phoneTo = recipient || customKeys.phoneTo || "+919876543210";
       result = await sendSmsOutreach({
         to: phoneTo,
@@ -61,6 +61,16 @@ export async function POST(req: Request) {
         customSid: customKeys.twilioSid,
         customToken: customKeys.twilioToken,
         customFrom: customKeys.twilioFrom,
+      });
+    } else if (channel === "whatsapp") {
+      const phoneTo = recipient || customKeys.phoneTo || "+919876543210";
+      result = await sendWhatsappOutreach({
+        to: phoneTo,
+        body: `Your payment of ₹${transaction.amount} to ${transaction.merchant_name} failed. Tap to recover in 1 click.`,
+        recoveryUrl,
+        customSid: customKeys.twilioSid,
+        customToken: customKeys.twilioToken,
+        customFrom: customKeys.twilioWhatsappFrom,
       });
     } else if (channel === "telegram") {
       result = await sendTelegramOutreach({
