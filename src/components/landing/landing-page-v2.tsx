@@ -168,7 +168,7 @@ function HeroCockpit() {
             <div className="mt-6 space-y-3">
               <ChatLine side="right">Resend WhatsApp recovery for txn_demo_7</ChatLine>
               <ChatLine side="left" warning>
-                I will resend a WhatsApp recovery message for Acme Store's INR 1,499 declined transaction. The recipient will come from the stored customer phone number. Confirm this action?
+                I will resend a WhatsApp recovery message for Acme Store&apos;s INR 1,499 declined transaction. The recipient will come from the stored customer phone number. Confirm this action?
               </ChatLine>
               <div className="ml-0 flex gap-2 sm:ml-12">
                 <span className="rounded-full bg-[#b8ff66] px-3 py-1.5 text-xs font-semibold text-[#10130d]">Confirm</span>
