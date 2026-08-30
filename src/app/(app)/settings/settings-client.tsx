@@ -48,6 +48,23 @@ export function SettingsClient({
   const [testingOutreach, setTestingOutreach] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
 
+  // Real transaction picker — lets the tester dispatch against actual
+  // transaction data instead of always falling back to a fake ₹4999 demo.
+  const [recentTransactions, setRecentTransactions] = useState<
+    { id: string; amount: number; status: string; method: string; merchant_name: string; created_at: string }[]
+  >([]);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string>("");
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+
+  useEffect(() => {
+    setLoadingTransactions(true);
+    fetch("/api/transactions/recent")
+      .then((res) => (res.ok ? res.json() : { transactions: [] }))
+      .then((data) => setRecentTransactions(data.transactions || []))
+      .catch(() => setRecentTransactions([]))
+      .finally(() => setLoadingTransactions(false));
+  }, []);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setHostOrigin(window.location.origin);
@@ -156,6 +173,7 @@ export function SettingsClient({
         body: JSON.stringify({
           channel: testChannel,
           recipient: testRecipient,
+          transactionId: selectedTransactionId || undefined,
           customKeys: {
             resendApiKey: customResendKey,
             twilioSid: customTwilioSid,
@@ -438,6 +456,32 @@ export function SettingsClient({
                       {ch}
                     </button>
                   ))}
+                </div>
+
+                <div>
+                  <label className="block font-mono text-mono-s text-text-tertiary mb-1">
+                    Test against a real transaction (optional)
+                  </label>
+                  <select
+                    value={selectedTransactionId}
+                    onChange={(e) => setSelectedTransactionId(e.target.value)}
+                    className="w-full bg-surface-900 border border-border rounded-md px-3 py-2 font-mono text-mono-s text-text-primary"
+                  >
+                    <option value="">Use generic demo data (₹4,999 sample)</option>
+                    {recentTransactions.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.id} — ₹{t.amount.toLocaleString("en-IN")} · {t.method} · {t.status}
+                      </option>
+                    ))}
+                  </select>
+                  {loadingTransactions && (
+                    <p className="font-mono text-mono-s text-text-tertiary mt-1">Loading your recent transactions...</p>
+                  )}
+                  {!loadingTransactions && recentTransactions.length === 0 && (
+                    <p className="font-mono text-mono-s text-text-tertiary mt-1">
+                      No real transactions yet — trigger a failed test payment first, or leave this on demo data.
+                    </p>
+                  )}
                 </div>
 
                 {testChannel === "email" && (
