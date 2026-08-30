@@ -57,6 +57,8 @@ export async function POST(req: Request) {
     decline_code: payload.error_code ?? null,
     decline_reason: payload.error_description ?? payload.error_reason ?? null,
     merchant_name: payload.notes?.merchant ?? "Merchant",
+    customer_email: payload.email ?? null,
+    customer_contact: payload.contact ?? null,
     created_at: now,
     recovered_at: event === "payment.captured" ? now : null,
   };

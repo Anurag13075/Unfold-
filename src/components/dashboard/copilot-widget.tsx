@@ -10,6 +10,12 @@ type ChatRole = "user" | "assistant";
 interface ChatMessage {
   role: ChatRole;
   content: string;
+  requiresConfirmation?: boolean;
+}
+
+interface PendingToolCall {
+  name: string;
+  params: Record<string, unknown>;
 }
 
 const starterQuestions = [
@@ -24,6 +30,7 @@ export function CopilotWidget() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [hasInsight, setHasInsight] = useState(false);
+  const [pendingToolCall, setPendingToolCall] = useState<PendingToolCall | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -57,6 +64,19 @@ export function CopilotWidget() {
     const question = (questionOverride ?? input).trim();
     if (!question || loading) return;
 
+    if (pendingToolCall && !isConfirmationReply(question)) {
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: "There is already one pending action. Confirm or Cancel it before asking me to do something else.",
+          requiresConfirmation: true,
+        },
+      ]);
+      setInput("");
+      return;
+    }
+
     const nextMessages: ChatMessage[] = [...messages, { role: "user", content: question }];
     setMessages(nextMessages);
     setInput("");
@@ -69,14 +89,17 @@ export function CopilotWidget() {
         body: JSON.stringify({
           question,
           conversationHistory: messages.slice(-10),
+          pendingToolCall,
         }),
       });
       const data = await res.json();
+      setPendingToolCall(data.pendingToolCall ?? null);
       setMessages((current) => [
         ...current,
         {
           role: "assistant",
           content: res.ok && data.answer ? data.answer : "I could not answer that from the current payment snapshot.",
+          requiresConfirmation: Boolean(data.requiresConfirmation && data.pendingToolCall),
         },
       ]);
     } catch {
@@ -149,7 +172,7 @@ export function CopilotWidget() {
               </button>
             </div>
 
-            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
               {messages.length === 0 && (
                 <div className="rounded-card border border-border bg-ink-950/45 p-4">
                   <p className="text-body-m text-text-primary">
@@ -171,7 +194,12 @@ export function CopilotWidget() {
               )}
 
               {messages.map((message, index) => (
-                <MessageBubble key={`${message.role}-${index}`} message={message} />
+                <MessageBubble
+                  key={`${message.role}-${index}`}
+                  message={message}
+                  onConfirm={pendingToolCall ? () => sendQuestion("Confirm") : undefined}
+                  onCancel={pendingToolCall ? () => sendQuestion("Cancel") : undefined}
+                />
               ))}
 
               {loading && (
@@ -234,8 +262,23 @@ export function CopilotWidget() {
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function isConfirmationReply(value: string) {
+  return /^(yes|y|confirm|confirmed|do it|go ahead|proceed|approve|approved|send it|no|n|cancel|stop|deny|decline|abort)$/i.test(
+    value.trim()
+  );
+}
+
+function MessageBubble({
+  message,
+  onConfirm,
+  onCancel,
+}: {
+  message: ChatMessage;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}) {
   const isUser = message.role === "user";
+  const isPending = Boolean(message.requiresConfirmation);
 
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
@@ -244,10 +287,30 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           "max-w-[85%] rounded-card px-3 py-2 text-body-m",
           isUser
             ? "bg-ember-500 text-ink-950"
-            : "border border-border bg-surface-700 text-text-primary"
+            : isPending
+              ? "border border-ember-500/40 bg-ember-wash text-text-primary"
+              : "border border-border bg-surface-700 text-text-primary"
         )}
       >
         <p className="whitespace-pre-wrap">{message.content}</p>
+        {isPending && onConfirm && onCancel && (
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="rounded-btn bg-ember-500 px-3 py-1.5 font-mono text-mono-s font-bold text-ink-950 transition-colors hover:bg-ember-700"
+            >
+              Confirm
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-btn border border-border bg-surface-800 px-3 py-1.5 font-mono text-mono-s text-text-secondary transition-colors hover:text-text-primary"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

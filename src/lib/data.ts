@@ -1,6 +1,25 @@
 import { createServiceClient } from "./supabase";
 import type { Transaction, RouteCluster, AgentAction, RecoveryMessage } from "@/types";
 
+function mapTransaction(t: any): Transaction {
+  return {
+    id: t.id,
+    razorpay_payment_id: t.razorpay_payment_id,
+    amount: t.amount,
+    currency: t.currency,
+    method: t.method,
+    issuer: t.issuer,
+    status: t.status as Transaction["status"],
+    decline_code: t.decline_code,
+    decline_reason: t.decline_reason,
+    merchant_name: t.merchant_name,
+    customer_email: t.customer_email ?? null,
+    customer_contact: t.customer_contact ?? null,
+    created_at: t.created_at,
+    recovered_at: t.recovered_at,
+  };
+}
+
 export async function ensureSeeded(userId: string) {
   return;
 }
@@ -22,20 +41,7 @@ export async function getTransactions(userId: string, filter?: string): Promise<
   const { data, error } = await query;
   if (error || !data) return [];
 
-  return data.map((t: any) => ({
-    id: t.id,
-    razorpay_payment_id: t.razorpay_payment_id,
-    amount: t.amount,
-    currency: t.currency,
-    method: t.method,
-    issuer: t.issuer,
-    status: t.status as Transaction["status"],
-    decline_code: t.decline_code,
-    decline_reason: t.decline_reason,
-    merchant_name: t.merchant_name,
-    created_at: t.created_at,
-    recovered_at: t.recovered_at,
-  }));
+  return data.map(mapTransaction);
 }
 
 export async function getTransaction(id: string, userId?: string): Promise<Transaction | null> {
@@ -51,19 +57,96 @@ export async function getTransaction(id: string, userId?: string): Promise<Trans
 
   if (error || !data) return null;
 
+  return mapTransaction(data);
+}
+
+export async function updateTransactionStatus(
+  transactionId: string,
+  userId: string,
+  status: "recovered" | "escalated"
+) {
+  const supabase = createServiceClient();
+  if (!supabase) return null;
+
+  const now = new Date().toISOString();
+  const update =
+    status === "recovered"
+      ? { status, recovered_at: now }
+      : { status, recovered_at: null };
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .update(update)
+    .eq("id", transactionId)
+    .eq("user_id", userId)
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return mapTransaction(data);
+}
+
+export async function logRecoveryMessageTrace(params: {
+  transactionId: string;
+  channel: "email" | "sms" | "whatsapp";
+  body: string;
+}) {
+  const supabase = createServiceClient();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("recovery_messages")
+    .insert({
+      transaction_id: params.transactionId,
+      channel: params.channel,
+      body: params.body,
+      created_at: new Date().toISOString(),
+    })
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) return null;
   return {
     id: data.id,
-    razorpay_payment_id: data.razorpay_payment_id,
-    amount: data.amount,
-    currency: data.currency,
-    method: data.method,
-    issuer: data.issuer,
-    status: data.status as Transaction["status"],
-    decline_code: data.decline_code,
-    decline_reason: data.decline_reason,
-    merchant_name: data.merchant_name,
+    transaction_id: data.transaction_id,
+    channel: data.channel as RecoveryMessage["channel"],
+    body: data.body,
     created_at: data.created_at,
-    recovered_at: data.recovered_at,
+  };
+}
+
+export async function logCopilotToolAction(params: {
+  transactionId: string;
+  toolName: string;
+  summary: string;
+}) {
+  const supabase = createServiceClient();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("agent_actions")
+    .insert({
+      transaction_id: params.transactionId,
+      decision: "escalate_human",
+      delay_seconds: null,
+      alt_method: params.toolName,
+      reasoning: `Copilot executed ${params.toolName}: ${params.summary}. Confirmed by user.`,
+      confidence: 1,
+      created_at: new Date().toISOString(),
+    })
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return {
+    id: data.id,
+    transaction_id: data.transaction_id,
+    decision: data.decision as AgentAction["decision"],
+    delay_seconds: data.delay_seconds,
+    alt_method: data.alt_method,
+    reasoning: data.reasoning,
+    confidence: data.confidence,
+    created_at: data.created_at,
   };
 }
 

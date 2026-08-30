@@ -1,5 +1,6 @@
 import { callCerebras, callGrok } from "@/lib/agent";
 import { getAgentActions, getDashboardStats, getRouteClusters, getTransactions } from "@/lib/data";
+import { copilotTools, type PendingCopilotToolCall } from "@/lib/copilot-tools";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
 import type { AgentAction, RouteCluster, Transaction } from "@/types";
 
@@ -7,6 +8,8 @@ export interface CopilotHistoryMessage {
   role: string;
   content: string;
 }
+
+export type ConfirmationIntent = "confirm" | "deny" | "unclear";
 
 interface CopilotSnapshot {
   dashboardStats: Awaited<ReturnType<typeof getDashboardStats>>;
@@ -123,6 +126,128 @@ function answerFromRules(question: string, snapshot: CopilotSnapshot) {
   }
 
   return `I'm using the live payment snapshot directly. Current recovered GMV is ${formatCurrencyCompact(stats.recoveredGmv)}, recovery rate is ${stats.recoveryRate}%, active route clusters: ${activeClusters.length}, and latest transactions loaded: ${txns.length}. Ask about recovery rate, at-risk GMV, route clusters, or agent decisions for a sharper answer.`;
+}
+
+function parseToolCallFromText(question: string): PendingCopilotToolCall | null {
+  const normalized = question.toLowerCase();
+  const transactionMatch = question.match(/\btxn_[a-zA-Z0-9_-]+\b/);
+  const transactionId = transactionMatch?.[0];
+
+  if (!transactionId) return null;
+
+  if (normalized.includes("resend") || normalized.includes("send recovery") || normalized.includes("send message")) {
+    const channel = normalized.includes("whatsapp")
+      ? "whatsapp"
+      : normalized.includes("sms")
+        ? "sms"
+        : normalized.includes("telegram")
+          ? "telegram"
+          : "email";
+
+    return {
+      name: "resend_recovery_message",
+      params: { transactionId, channel },
+    };
+  }
+
+  if (normalized.includes("mark") || normalized.includes("update status") || normalized.includes("set status")) {
+    if (normalized.includes("recovered")) {
+      return {
+        name: "mark_transaction_status",
+        params: { transactionId, status: "recovered" },
+      };
+    }
+    if (normalized.includes("escalated") || normalized.includes("escalate")) {
+      return {
+        name: "mark_transaction_status",
+        params: { transactionId, status: "escalated" },
+      };
+    }
+  }
+
+  return null;
+}
+
+async function callGroqForToolIntent(messages: Array<{ role: "system" | "user" | "assistant"; content: string }>) {
+  const apiKey = process.env.GROQ_API_KEY || process.env.GROK_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages,
+        temperature: 0.1,
+        tools: copilotTools,
+        tool_choice: "auto",
+      }),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall?.function?.name || !toolCall.function.arguments) return null;
+
+    return {
+      name: toolCall.function.name,
+      params: JSON.parse(toolCall.function.arguments),
+    } as PendingCopilotToolCall;
+  } catch {
+    return null;
+  }
+}
+
+export async function detectCopilotToolCall(
+  question: string,
+  conversationHistory: CopilotHistoryMessage[]
+): Promise<PendingCopilotToolCall | null> {
+  const fallback = parseToolCallFromText(question);
+  const hasProvider = !!(process.env.GROQ_API_KEY || process.env.GROK_API_KEY);
+  if (!hasProvider) return fallback;
+
+  const messages = [
+    {
+      role: "system" as const,
+      content:
+        "You classify whether the merchant wants Ask Undrop to execute one of the available tools. Call a tool only for a concrete action request with a transaction ID. For ordinary questions, do not call a tool.",
+    },
+    ...sanitizeHistory(conversationHistory),
+    { role: "user" as const, content: question },
+  ];
+
+  return (await callGroqForToolIntent(messages)) || fallback;
+}
+
+export async function classifyConfirmationIntent(message: string): Promise<ConfirmationIntent> {
+  const normalized = message.trim().toLowerCase();
+  if (/^(yes|y|confirm|confirmed|do it|go ahead|proceed|approve|approved|send it)$/i.test(normalized)) {
+    return "confirm";
+  }
+  if (/^(no|n|cancel|stop|deny|decline|don't|do not|abort)$/i.test(normalized)) {
+    return "deny";
+  }
+
+  const hasProvider = !!(process.env.GROQ_API_KEY || process.env.GROK_API_KEY || process.env.CEREBRAS_API_KEY);
+  if (!hasProvider) return "unclear";
+
+  const messages = [
+    {
+      role: "system" as const,
+      content:
+        "Classify the user's reply to a pending action confirmation. Return exactly one word: confirm, deny, or unclear.",
+    },
+    { role: "user" as const, content: message },
+  ];
+
+  let response = await callGrok(messages, "text");
+  if (!response) response = await callCerebras(messages, "text");
+  const result = response?.trim().toLowerCase();
+  return result === "confirm" || result === "deny" ? result : "unclear";
 }
 
 export async function answerCopilotQuery(

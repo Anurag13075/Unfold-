@@ -27,10 +27,12 @@ CREATE TABLE IF NOT EXISTS transactions (
   currency TEXT DEFAULT 'INR',
   method TEXT NOT NULL,
   issuer TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('declined', 'recovering', 'recovered', 'failed')),
+  status TEXT NOT NULL CHECK (status IN ('declined', 'recovering', 'recovered', 'failed', 'escalated')),
   decline_code TEXT,
   decline_reason TEXT,
   merchant_name TEXT NOT NULL,
+  customer_email TEXT,
+  customer_contact TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   recovered_at TIMESTAMPTZ
 );

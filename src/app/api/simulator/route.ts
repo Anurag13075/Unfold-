@@ -46,6 +46,8 @@ export async function POST(req: Request) {
       decline_code: decline.code,
       decline_reason: decline.reason,
       merchant_name: randomFrom(["Urban Threads", "FreshCart", "CloudDesk"]),
+      customer_email: `customer.${crypto.randomUUID().slice(0, 6)}@example.com`,
+      customer_contact: `+9198${Math.floor(10000000 + Math.random() * 89999999)}`,
       created_at: now,
       recovered_at: null,
     };

@@ -44,10 +44,12 @@ export interface Transaction {
   currency: string;
   method: string;
   issuer: string;
-  status: "declined" | "recovering" | "recovered" | "failed";
+  status: "declined" | "recovering" | "recovered" | "failed" | "escalated";
   decline_code: string | null;
   decline_reason: string | null;
   merchant_name: string;
+  customer_email?: string | null;
+  customer_contact?: string | null;
   created_at: string;
   recovered_at: string | null;
 }
@@ -89,4 +91,4 @@ export interface RecoveryMessage {
   created_at: string;
 }
 
-export type TransactionFilter = "all" | "declined" | "recovering" | "recovered";
+export type TransactionFilter = "all" | "declined" | "recovering" | "recovered" | "escalated";

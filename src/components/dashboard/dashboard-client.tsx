@@ -59,6 +59,7 @@ export function DashboardClient({
     { value: "declined", label: "Declined" },
     { value: "recovering", label: "Recovering" },
     { value: "recovered", label: "Recovered" },
+    { value: "escalated", label: "Escalated" },
   ];
 
   return (
