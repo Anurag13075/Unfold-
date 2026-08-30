@@ -2,6 +2,18 @@ import { createServiceClient } from "@/lib/supabase";
 import { getUserById, ensureUserExists } from "@/lib/users";
 import { decrypt } from "@/lib/encryption";
 import { analyzeTransaction } from "@/lib/agent";
+import {
+  sendEmailOutreach,
+  sendSmsOutreach,
+  sendWhatsappOutreach,
+  sendTelegramOutreach,
+} from "@/lib/outreach";
+import {
+  getMerchantEmailKey,
+  getMerchantSmsConfig,
+  getMerchantWhatsappConfig,
+  getMerchantTelegramConfig,
+} from "@/lib/outreach-config";
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 
@@ -131,6 +143,66 @@ export async function POST(
 
     await supabase.from("agent_actions").insert(action);
     await supabase.from("recovery_messages").insert(message);
+
+    // Auto-dispatch real outreach — using ONLY this merchant's own saved
+    // credentials. If they haven't configured a given channel yet, we
+    // deliberately skip sending rather than falling back to any global/
+    // owner credentials, so one merchant's customers are never contacted
+    // through another merchant's Twilio/Resend/Telegram account.
+    const host = req.headers.get("host") || "localhost:3000";
+    const protocol = host.includes("localhost") ? "http" : "https";
+    const recoveryUrl = `${protocol}://${host}/recover/${txnId}`;
+    const channel = decision.drafted_message.channel;
+    const customerEmail = payload.email || null;
+    const customerContact = payload.contact || null;
+
+    if (channel === "email" && customerEmail) {
+      const resendKey = getMerchantEmailKey(user);
+      if (resendKey) {
+        await sendEmailOutreach({
+          to: customerEmail,
+          subject: `Payment Recovery Notice for ₹${txn.amount}`,
+          merchantName: txn.merchant_name,
+          amount: txn.amount,
+          recoveryUrl,
+          customApiKey: resendKey,
+        });
+      }
+    } else if (channel === "sms" && customerContact) {
+      const smsConfig = getMerchantSmsConfig(user);
+      if (smsConfig) {
+        await sendSmsOutreach({
+          to: customerContact,
+          body: decision.drafted_message.body,
+          recoveryUrl,
+          customSid: smsConfig.sid,
+          customToken: smsConfig.token,
+          customFrom: smsConfig.from,
+        });
+      }
+    } else if (channel === "whatsapp" && customerContact) {
+      const waConfig = getMerchantWhatsappConfig(user);
+      if (waConfig) {
+        await sendWhatsappOutreach({
+          to: customerContact,
+          body: decision.drafted_message.body,
+          recoveryUrl,
+          customSid: waConfig.sid,
+          customToken: waConfig.token,
+          customFrom: waConfig.from,
+        });
+      }
+    }
+
+    const telegramConfig = getMerchantTelegramConfig(user);
+    if (telegramConfig) {
+      await sendTelegramOutreach({
+        text: `Decline captured: ₹${txn.amount} via ${txn.method} (${txn.issuer}). AI decision: ${decision.decision}.`,
+        recoveryUrl,
+        customBotToken: telegramConfig.botToken,
+        customChatId: telegramConfig.chatId,
+      });
+    }
   }
 
   return NextResponse.json({ status: "ok" });
