@@ -10,6 +10,7 @@ import { Waveform } from "@/components/waveform/waveform";
 import { RouteClusterCard } from "@/components/routes/route-cluster-card";
 import { TransactionDrawer } from "@/components/transactions/transaction-drawer";
 import { SimulatorControls } from "@/components/dashboard/simulator-controls";
+import { CopilotWidget } from "@/components/dashboard/copilot-widget";
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import type { Transaction, TransactionFilter } from "@/types";
@@ -211,6 +212,7 @@ export function DashboardClient({
         open={!!selectedTxn}
         onClose={() => setSelectedTxn(null)}
       />
+      <CopilotWidget />
     </>
   );
 }

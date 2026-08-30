@@ -5,7 +5,10 @@ interface GrokMessage {
   content: string;
 }
 
-async function callGrok(messages: GrokMessage[]): Promise<string | null> {
+export async function callGrok(
+  messages: GrokMessage[],
+  responseFormat: "json_object" | "text" = "json_object"
+): Promise<string | null> {
   // NOTE: despite the env var name (kept for backward compatibility with
   // existing deployments), this actually calls Groq (console.groq.com,
   // the fast-inference company) — NOT xAI's Grok model. An xAI/Grok API
@@ -24,7 +27,7 @@ async function callGrok(messages: GrokMessage[]): Promise<string | null> {
         model: "llama-3.3-70b-versatile",
         messages,
         temperature: 0.3,
-        response_format: { type: "json_object" },
+        response_format: { type: responseFormat },
       }),
     });
 
@@ -40,7 +43,10 @@ async function callGrok(messages: GrokMessage[]): Promise<string | null> {
   }
 }
 
-async function callCerebras(messages: GrokMessage[]): Promise<string | null> {
+export async function callCerebras(
+  messages: GrokMessage[],
+  responseFormat: "json_object" | "text" = "json_object"
+): Promise<string | null> {
   const apiKey = process.env.CEREBRAS_API_KEY;
   if (!apiKey) return null;
 
@@ -55,7 +61,7 @@ async function callCerebras(messages: GrokMessage[]): Promise<string | null> {
         model: "llama-3.3-70b",
         messages,
         temperature: 0.3,
-        response_format: { type: "json_object" },
+        response_format: { type: responseFormat },
       }),
     });
 
