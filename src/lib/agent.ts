@@ -24,7 +24,7 @@ export async function callGrok(
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-oss-120b",
+        model:  "openai/gpt-oss-120b",
         messages,
         temperature: 0.3,
         ...(responseFormat === "json_object" ? { response_format: { type: "json_object" } } : {}),
