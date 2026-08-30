@@ -1,5 +1,6 @@
 # Undrop
 
+![Undrop](./undrop.png.png) 
 **Agentic revenue recovery for Razorpay merchants.**
 
 Undrop helps merchants recover failed payments and detect route-level payment issues before they keep leaking GMV. It combines a transaction recovery agent, customer outreach workflows, live failure clustering, and Smart Router-ready recommendations in one operator console.
