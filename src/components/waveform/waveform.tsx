@@ -3,9 +3,19 @@
 import { useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
+type WaveformStatus = "declined" | "recovering" | "recovered" | "failed" | "escalated";
+
+const colors: Record<WaveformStatus, string> = {
+  declined: "#E5536B",
+  recovering: "#F2A73B",
+  recovered: "#35D0A6",
+  failed: "#E5536B",
+  escalated: "#F2A73B",
+};
+
 interface WaveformProps {
   data?: number[];
-  status?: "declined" | "recovering" | "recovered" | "failed";
+  status?: WaveformStatus;
   width?: number;
   height?: number;
   className?: string;
@@ -22,13 +32,6 @@ export function Waveform({
 }: WaveformProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
-
-  const colors = {
-    declined: "#E5536B",
-    recovering: "#F2A73B",
-    recovered: "#35D0A6",
-    failed: "#E5536B",
-  };
 
   const generateDefault = useCallback(() => {
     const points = 40;
