@@ -14,6 +14,7 @@ interface SettingsClientProps {
   hasWhatsapp: boolean;
   hasSms: boolean;
   hasEmail: boolean;
+  hasTelegram: boolean;
 }
 
 export function SettingsClient({
@@ -24,6 +25,7 @@ export function SettingsClient({
   hasWhatsapp,
   hasSms,
   hasEmail,
+  hasTelegram,
 }: SettingsClientProps) {
   const [workspaceName, setWorkspaceName] = useState(initialName);
   const [keyId, setKeyId] = useState(razorpayKeyId || "");
@@ -89,6 +91,56 @@ export function SettingsClient({
       setMessage("Failed to save settings");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Saved outreach credential state (used for permanent auto-dispatch,
+  // separate from the one-off Live Dispatch Tester further down).
+  const [savedResendKey, setSavedResendKey] = useState("");
+  const [savedTwilioSid, setSavedTwilioSid] = useState("");
+  const [savedTwilioToken, setSavedTwilioToken] = useState("");
+  const [savedTwilioSmsFrom, setSavedTwilioSmsFrom] = useState("");
+  const [savedTwilioWhatsappFrom, setSavedTwilioWhatsappFrom] = useState("");
+  const [savedTelegramBotToken, setSavedTelegramBotToken] = useState("");
+  const [savedTelegramChatId, setSavedTelegramChatId] = useState("");
+  const [savingOutreach, setSavingOutreach] = useState(false);
+  const [outreachMessage, setOutreachMessage] = useState<string | null>(null);
+
+  const handleSaveOutreach = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingOutreach(true);
+    setOutreachMessage(null);
+    try {
+      const res = await fetch("/api/settings/outreach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resendApiKey: savedResendKey || undefined,
+          twilioSid: savedTwilioSid || undefined,
+          twilioToken: savedTwilioToken || undefined,
+          twilioSmsFrom: savedTwilioSmsFrom || undefined,
+          twilioWhatsappFrom: savedTwilioWhatsappFrom || undefined,
+          telegramBotToken: savedTelegramBotToken || undefined,
+          telegramChatId: savedTelegramChatId || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOutreachMessage("Saved. Future failed payments will auto-dispatch through these channels.");
+        setSavedResendKey("");
+        setSavedTwilioSid("");
+        setSavedTwilioToken("");
+        setSavedTwilioSmsFrom("");
+        setSavedTwilioWhatsappFrom("");
+        setSavedTelegramBotToken("");
+        setSavedTelegramChatId("");
+      } else {
+        setOutreachMessage(`Error: ${data.error || "Failed to save"}`);
+      }
+    } catch (err: any) {
+      setOutreachMessage(`Error: ${err.message || "Failed to save"}`);
+    } finally {
+      setSavingOutreach(false);
     }
   };
 
@@ -216,6 +268,138 @@ export function SettingsClient({
                 <div className="flex items-center gap-3 pt-2">
                   <Button type="submit" disabled={saving}>
                     {saving ? "Saving..." : "Save Razorpay Credentials"}
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+
+          {/* Saved outreach credentials — used for real auto-dispatch */}
+          <div className="col-span-12">
+            <Card>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-display-m text-text-primary">
+                  Auto-Dispatch Channel Credentials
+                </h2>
+              </div>
+
+              <p className="text-body-s text-text-secondary mb-6">
+                Save your own Resend / Twilio / Telegram credentials here so failed payments
+                are automatically emailed, texted, WhatsApp&apos;d, or Telegram-alerted the
+                moment they happen — using YOUR accounts, not shared with any other merchant.
+                Leave a channel blank to skip auto-dispatch for it (it will still be
+                drafted and visible on the transaction, just not sent automatically).
+              </p>
+
+              <form onSubmit={handleSaveOutreach} className="space-y-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${hasEmail ? "bg-pulse-500" : "bg-flatline-500"}`} />
+                    <span className="font-mono text-mono-s text-text-tertiary">
+                      Email (Resend) — {hasEmail ? "Connected" : "Not configured"}
+                    </span>
+                  </div>
+                  <Input
+                    label="Resend API Key"
+                    mono
+                    secret
+                    placeholder={hasEmail ? "•••••••• (set — leave blank to keep)" : "re_..."}
+                    value={savedResendKey}
+                    onChange={(e) => setSavedResendKey(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${hasSms ? "bg-pulse-500" : "bg-flatline-500"}`} />
+                    <span className="font-mono text-mono-s text-text-tertiary">
+                      SMS (Twilio) — {hasSms ? "Connected" : "Not configured"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Input
+                      label="Twilio Account SID"
+                      mono
+                      placeholder="AC..."
+                      value={savedTwilioSid}
+                      onChange={(e) => setSavedTwilioSid(e.target.value)}
+                    />
+                    <Input
+                      label="Twilio Auth Token"
+                      mono
+                      secret
+                      placeholder="••••••••"
+                      value={savedTwilioToken}
+                      onChange={(e) => setSavedTwilioToken(e.target.value)}
+                    />
+                    <Input
+                      label="Twilio SMS From Number"
+                      mono
+                      placeholder="+1415..."
+                      value={savedTwilioSmsFrom}
+                      onChange={(e) => setSavedTwilioSmsFrom(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${hasWhatsapp ? "bg-pulse-500" : "bg-flatline-500"}`} />
+                    <span className="font-mono text-mono-s text-text-tertiary">
+                      WhatsApp (Twilio) — {hasWhatsapp ? "Connected" : "Not configured"}
+                    </span>
+                  </div>
+                  <p className="font-mono text-mono-s text-text-tertiary mb-2">
+                    Requires a Twilio WhatsApp-approved sender — a plain SMS number cannot send WhatsApp messages. Uses the same SID/Token above.
+                  </p>
+                  <Input
+                    label="Twilio WhatsApp From (e.g. whatsapp:+14155238886)"
+                    mono
+                    placeholder="whatsapp:+1415..."
+                    value={savedTwilioWhatsappFrom}
+                    onChange={(e) => setSavedTwilioWhatsappFrom(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${hasTelegram ? "bg-pulse-500" : "bg-flatline-500"}`} />
+                    <span className="font-mono text-mono-s text-text-tertiary">
+                      Telegram — {hasTelegram ? "Connected" : "Not configured"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Input
+                      label="Telegram Bot Token"
+                      mono
+                      secret
+                      placeholder="123456:ABC-..."
+                      value={savedTelegramBotToken}
+                      onChange={(e) => setSavedTelegramBotToken(e.target.value)}
+                    />
+                    <Input
+                      label="Telegram Chat ID"
+                      mono
+                      placeholder="-100123456789"
+                      value={savedTelegramChatId}
+                      onChange={(e) => setSavedTelegramChatId(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {outreachMessage && (
+                  <p
+                    className={`text-body-s ${
+                      outreachMessage.startsWith("Error") ? "text-flatline-500" : "text-pulse-700"
+                    }`}
+                  >
+                    {outreachMessage}
+                  </p>
+                )}
+
+                <div className="flex items-center gap-3 pt-2">
+                  <Button type="submit" disabled={savingOutreach}>
+                    {savingOutreach ? "Saving..." : "Save Channel Credentials"}
                   </Button>
                 </div>
               </form>
